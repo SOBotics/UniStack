@@ -8,6 +8,6 @@ namespace UniStack
 
         public string Value { get; set; }
 
-        public float IDF { get; set; }
+        public double IDF { get; set; }
     }
 }

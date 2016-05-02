@@ -42,6 +42,9 @@
   <ItemGroup>
     <Compile Include="BagOfWordsV1.cs" />
     <Compile Include="BagOfWordsV2.cs" />
+    <Compile Include="DupeClassifier.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="IBagOfWords.cs" />
     <Compile Include="Post.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Term.cs" />

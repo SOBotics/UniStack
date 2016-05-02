@@ -10,7 +10,7 @@ namespace UniStack
     /// is more RAM intensive [compared to V1], but benefits
     /// from greater processing speeds.)
     /// </summary>
-    public class BagOfWordsV2
+    public class BagOfWordsV2 : IBagOfWords
     {
         private bool minipulatedSinceLastRecalc = true;
 
@@ -26,20 +26,20 @@ namespace UniStack
             {
                 Terms[term.Value] = term;
 
-                foreach (var docIDByTF in term.PostIDsByTFs)
+                foreach (var postIDByTF in term.PostIDsByTFs)
                 {
-                    if (Posts.ContainsKey(docIDByTF.Key))
+                    if (Posts.ContainsKey(postIDByTF.Key))
                     {
-                        Posts[docIDByTF.Key].TermsByTFs[term.Value] = docIDByTF.Value;
+                        Posts[postIDByTF.Key].TermsByTFs[term.Value] = postIDByTF.Value;
                     }
                     else
                     {
-                        Posts[docIDByTF.Key] = new Post
+                        Posts[postIDByTF.Key] = new Post
                         {
-                            ID = docIDByTF.Key,
+                            ID = postIDByTF.Key,
                             TermsByTFs = new Dictionary<string, uint>
                             {
-                                [term.Value] = docIDByTF.Value
+                                [term.Value] = postIDByTF.Value
                             }
                         };
                     }
@@ -58,29 +58,29 @@ namespace UniStack
             return Posts.ContainsKey(docID);
         }
 
-        public void AddPost(uint PostID, IDictionary<string, uint> termTFs)
+        public void AddPost(uint postID, IDictionary<string, uint> termTFs)
         {
             if (termTFs == null) throw new ArgumentNullException(nameof(termTFs));
-            if (ContainsPost(PostID))
+            if (ContainsPost(postID))
             {
-                throw new ArgumentException("A post with this ID already exists.", nameof(PostID));
+                throw new ArgumentException("A post with this ID already exists.", nameof(postID));
             }
 
             minipulatedSinceLastRecalc = true;
 
-            Posts[PostID] = new Post
+            Posts[postID] = new Post
             {
-                ID = PostID,
+                ID = postID,
                 TermsByTFs = new Dictionary<string, uint>()
             };
 
             foreach (var term in termTFs.Keys)
             {
-                Posts[PostID].TermsByTFs[term] = termTFs[term];
+                Posts[postID].TermsByTFs[term] = termTFs[term];
 
                 if (Terms.ContainsKey(term))
                 {
-                    Terms[term].PostIDsByTFs[PostID] = termTFs[term];
+                    Terms[term].PostIDsByTFs[postID] = termTFs[term];
                 }
                 else
                 {
@@ -88,7 +88,7 @@ namespace UniStack
                     {
                         PostIDsByTFs = new Dictionary<uint, uint>
                         {
-                            [PostID] = termTFs[term]
+                            [postID] = termTFs[term]
                         },
                         Value = term
                     };
@@ -169,7 +169,7 @@ namespace UniStack
         /// A dictionary containing a collection of highest
         /// matching post IDs (the key) with their given similarity (the value).
         /// </returns>
-        public Dictionary<uint, float> GetSimilarity(IDictionary<string, uint> terms, uint maxPostsToReturn)
+        public Dictionary<uint, double> GetSimilarity(IDictionary<string, uint> terms, uint maxPostsToReturn)
         {
             if (minipulatedSinceLastRecalc)
             {
@@ -194,7 +194,7 @@ namespace UniStack
             }
 
             // Calculate the Euclidean lengths of the posts.
-            var docLengths = new Dictionary<uint, float>();
+            var docLengths = new Dictionary<uint, double>();
             foreach (var postID in matchingPostIDs)
             {
                 docLengths[postID] = CalculatePostLength(Posts[postID].TermsByTFs);
@@ -202,7 +202,7 @@ namespace UniStack
 
             // FINALLY, phew! We made it this far. So, now we can
             // actually calculate the cosine similarity for the posts.
-            var postSimilarities = new Dictionary<uint, float>();
+            var postSimilarities = new Dictionary<uint, double>();
             foreach (var docID in matchingPostIDs)
             {
                 var sim = 0D;
@@ -216,11 +216,11 @@ namespace UniStack
                     }
                 }
 
-                postSimilarities[docID] = (float)sim / Math.Max((queryLength * docLengths[docID]), 1);
+                postSimilarities[docID] = sim / Math.Max((queryLength * docLengths[docID]), 1);
             }
 
             // Now get the top x docs.
-            var topPosts = new Dictionary<uint, float>();
+            var topPosts = new Dictionary<uint, double>();
             var temp = postSimilarities.OrderByDescending(x => x.Value);
             var safeMax = Math.Min(postSimilarities.Count, maxPostsToReturn);
             foreach (var doc in temp)
@@ -233,7 +233,7 @@ namespace UniStack
             return topPosts;
         }
 
-        private float CalculatePostLength(Dictionary<string, uint> tfs)
+        private double CalculatePostLength(Dictionary<string, uint> tfs)
         {
             var len = 0D;
 
@@ -244,10 +244,10 @@ namespace UniStack
                         tf.Value;
             }
 
-            return (float)Math.Sqrt(len);
+            return Math.Sqrt(len);
         }
 
-        private float CalculateQueryLength(Dictionary<string, float> queryVector)
+        private double CalculateQueryLength(Dictionary<string, double> queryVector)
         {
             var len = 0D;
 
@@ -256,14 +256,14 @@ namespace UniStack
                 len += tfidf * tfidf;
             }
 
-            return (float)Math.Sqrt(len);
+            return Math.Sqrt(len);
         }
 
-        private Dictionary<string, float> CalculateQueryTfIdfVector(IDictionary<string, uint> tf)
+        private Dictionary<string, double> CalculateQueryTfIdfVector(IDictionary<string, uint> tf)
         {
-            var maxFrec = (float)tf.Max(x => x.Value);
+            var maxFrec = (double)tf.Max(x => x.Value);
 
-            var tfIdf = new Dictionary<string, float>();
+            var tfIdf = new Dictionary<string, double>();
 
             foreach (var term in tf.Keys)
             {

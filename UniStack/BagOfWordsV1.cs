@@ -10,7 +10,7 @@ namespace UniStack
     /// is less RAM intensive [compared to V2], but suffers
     /// from slower processing speeds.)
     /// </summary>
-    public class BagOfWordsV1
+    public class BagOfWordsV1 : IBagOfWords
     {
         private bool minipulatedSinceLastRecalc = true;
 
@@ -74,10 +74,10 @@ namespace UniStack
             }
         }
 
-        public void RemovePost(uint documentID, IDictionary<string, uint> termTFs)
+        public void RemovePost(uint postID, IDictionary<string, uint> termTFs)
         {
             if (termTFs == null) throw new ArgumentNullException(nameof(termTFs));
-            if (!ContainsPost(documentID))
+            if (!ContainsPost(postID))
             {
                 throw new KeyNotFoundException("Cannot find any posts with the specified ID.");
             }
@@ -90,7 +90,7 @@ namespace UniStack
 
             foreach (var term in termTFs.Keys)
             {
-                if (Terms[term].PostIDsByTFs.ContainsKey(documentID))
+                if (Terms[term].PostIDsByTFs.ContainsKey(postID))
                 {
                     if (Terms[term].PostIDsByTFs.Count == 1)
                     {
@@ -98,7 +98,7 @@ namespace UniStack
                     }
                     else
                     {
-                        Terms[term].PostIDsByTFs.Remove(documentID);
+                        Terms[term].PostIDsByTFs.Remove(postID);
                     }
                 }
             }
@@ -122,14 +122,14 @@ namespace UniStack
                 }
             }
 
-            var totalDocCount = (float)totalDocs.Count;
+            var totalDocCount = (double)totalDocs.Count;
 
             foreach (var term in Terms.Keys)
             {
                 // How many posts contain the term?
                 var docsFound = Terms[term].PostIDsByTFs.Count;
 
-                Terms[term].IDF = (float)Math.Log(totalDocCount / docsFound, 2);
+                Terms[term].IDF = Math.Log(totalDocCount / docsFound, 2);
             }
 
             minipulatedSinceLastRecalc = false;
@@ -145,7 +145,7 @@ namespace UniStack
         /// A dictionary containing a collection of highest matching post
         /// IDs (the key) with their given similarity (the value).
         /// </returns>
-        public Dictionary<uint, float> GetSimilarity(IDictionary<string, uint> terms, uint maxPostsToReturn)
+        public Dictionary<uint, double> GetSimilarity(IDictionary<string, uint> terms, uint maxPostsToReturn)
         {
             if (minipulatedSinceLastRecalc)
             {
@@ -177,7 +177,7 @@ namespace UniStack
             }
 
             // Calculate the Euclidean lengths of the posts.
-            var docLengths = new Dictionary<uint, float>();
+            var docLengths = new Dictionary<uint, double>();
             foreach (var docID in docs.Keys)
             {
                 docLengths[docID] = CalculateDocumentLength(docID, docs[docID]);
@@ -185,7 +185,7 @@ namespace UniStack
 
             // FINALLY, phew! We made it this far. So, now we can
             // actually calculate the cosine similarity of the posts.
-            var docSimilarities = new Dictionary<uint, float>();
+            var docSimilarities = new Dictionary<uint, double>();
             foreach (var docID in docs.Keys)
             {
                 var sim = 0D;
@@ -199,11 +199,11 @@ namespace UniStack
                     }
                 }
 
-                docSimilarities[docID] = (float)sim / Math.Max((queryLength * docLengths[docID]), 1);
+                docSimilarities[docID] = sim / Math.Max((queryLength * docLengths[docID]), 1);
             }
 
             // Now get the top x posts.
-            var topDocs = new Dictionary<uint, float>();
+            var topDocs = new Dictionary<uint, double>();
             var temp = docSimilarities.OrderByDescending(x => x.Value);
             var safeMax = Math.Min(docSimilarities.Count, maxPostsToReturn);
             foreach (var doc in temp)
@@ -216,7 +216,7 @@ namespace UniStack
             return topDocs;
         }
 
-        private float CalculateDocumentLength(uint docID, List<string> terms)
+        private double CalculateDocumentLength(uint docID, List<string> terms)
         {
             var len = 0D;
 
@@ -229,10 +229,10 @@ namespace UniStack
                 }
             }
 
-            return (float)Math.Sqrt(len);
+            return Math.Sqrt(len);
         }
 
-        private float CalculateQueryLength(Dictionary<string, float> queryVector)
+        private double CalculateQueryLength(Dictionary<string, double> queryVector)
         {
             var len = 0D;
 
@@ -241,14 +241,14 @@ namespace UniStack
                 len += tfidf * tfidf;
             }
 
-            return (float)Math.Sqrt(len);
+            return Math.Sqrt(len);
         }
 
-        private Dictionary<string, float> CalculateQueryTfIdfVector(IDictionary<string, uint> tf)
+        private Dictionary<string, double> CalculateQueryTfIdfVector(IDictionary<string, uint> tf)
         {
-            var maxFrec = (float)tf.Max(x => x.Value);
+            var maxFrec = (double)tf.Max(x => x.Value);
 
-            var tfIdf = new Dictionary<string, float>();
+            var tfIdf = new Dictionary<string, double>();
 
             foreach (var term in tf.Keys)
             {
