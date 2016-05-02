@@ -23,7 +23,9 @@ namespace UniStack
 
         public Dictionary<uint, double> ClassifyPost(string body)
         {
-            throw new NotImplementedException();
+            var tfs = body.GetTFs();
+            //TODO: Tokenise body html tags before calculating similarity.
+            return bow.GetSimilarity(tfs, 1);
         }
     }
 }
