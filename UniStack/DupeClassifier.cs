@@ -23,7 +23,7 @@ namespace UniStack
 
         public Dictionary<uint, double> ClassifyPost(string body)
         {
-            var tfs = body.GetTFs();
+            var tfs = body.ToTermFrequencyDictionary();
             //TODO: Tokenise body html tags before calculating similarity.
             return bow.GetSimilarity(tfs, 1);
         }

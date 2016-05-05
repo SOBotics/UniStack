@@ -12,7 +12,7 @@ namespace UniStack
         private static string[] wordDelimeters = new[]
         {
             // Parenthesis.
-            " (", "(\"", "('", ") ", ").", "),", ")?", ")!", "\")", "')", "):", ");",
+            ". (", " (", "(\"", "('", ") ", ").", "),", ")?", ")!", "\")", "')", "):", ");",
 
             // Square brackets.
             " [", "[\"", "['", "] ", "].", "],", "]?", "]!", "\"]", "']", "]:", "];",
@@ -29,22 +29,32 @@ namespace UniStack
             // Misc.
             ". ", ": ", "; ", "- ", "?", "!", "\\", "/", ",", " "
         };
+        private static readonly char[] strEndPunc = new[]
+        {
+            '.', ')'
+        };
+
 
 
 
         // ~30% faster than using a compiled regex.
-        public static Dictionary<string, uint> GetTFs(this string str)
+        public static Dictionary<string, uint> ToTermFrequencyDictionary(this string str)
         {
             var tfs = new Dictionary<string, uint>();
             var words = str.ToLowerInvariant().Split(wordDelimeters, StringSplitOptions.RemoveEmptyEntries);
+            var lastWordInd = words.Length - 1;
+            var lastWord = words[lastWordInd];
+
+            if (strEndPunc.Contains(lastWord[lastWord.Length]))
+            {
+                words[lastWordInd] = lastWord.Substring(0, lastWord.Length - 1);
+            }
 
             foreach (var wrd in words)
             {
                 var w = wrd;
 
                 if (w.All(c => !char.IsLetterOrDigit(c))) continue;
-
-                if (w.EndsWith(".")) w = w.Substring(0, w.Length - 1);
 
                 if (tfs.ContainsKey(w))
                 {

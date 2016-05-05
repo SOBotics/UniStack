@@ -13,8 +13,8 @@ namespace UniStack
         private static readonly Regex codeBlock = new Regex("(?is)<pre.*?><code>.*?</code></pre>", regOpts);
         private static readonly Regex inlineCode = new Regex("(?is)<code>(.*?)</code>", regOpts);
         private static readonly Regex blockQuote = new Regex("(?is)<blockquote>.*?</blockquote>", regOpts);
-        private static readonly Regex pic = new Regex("(?is)<img.*?>", regOpts);
-        private static readonly Regex link = new Regex("(?is)<a.*?>(.*?)</a>", regOpts);
+        private static readonly Regex pic = new Regex("(?is)(<a href=\"\\S+\">)?<img.*?>(</a>)?", regOpts);
+        private static readonly Regex link = new Regex("(?is)<a.*?>.*?</a>", regOpts);
         private static readonly Regex htmlTags = new Regex("(?is)<.*?>", regOpts);
         private static readonly Regex nonEng = new Regex(@"[^\x00-\x7F]+", regOpts);
 
