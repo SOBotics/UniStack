@@ -27,7 +27,7 @@ namespace UniStack
             tkn = body.ToLowerInvariant();
 
             // Process the various post segments.
-            tkn = TagBlockQuotes(tkn);
+            //tkn = TagBlockQuotes(tkn); // It seems that tagging these blocks removes quite valuable entropy.
             tkn = TagCodeBlocks(tkn);
             tkn = TagInlineCode(tkn);
             tkn = TagPictures(tkn);
@@ -36,7 +36,17 @@ namespace UniStack
             // Remove any remaining HTML tags.
             tkn = htmlTags.Replace(tkn, " ");
 
-            return tkn;
+            // Since we're not removing quotes now, let's try to remove any potential code.
+            // (Returning code drastically reduces search accuracy.)
+            var lines = tkn.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            var tknCln = "";
+            foreach (var l in lines)
+            {
+                if (l.GetPunctuationRatio() >= 0.1 && !l.StartsWith("• ") && !l.EndsWith("• ")) continue;
+                tknCln += l + "\n";
+            }
+
+            return tknCln;
         }
 
 

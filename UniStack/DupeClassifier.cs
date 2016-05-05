@@ -10,6 +10,8 @@ namespace UniStack
     {
         private readonly IBagOfWords bow;
 
+        public IBagOfWords BagOfWords { get { return bow; } }
+
 
 
         public DupeClassifier(IBagOfWords bagOfWords)
@@ -23,9 +25,9 @@ namespace UniStack
 
         public Dictionary<uint, double> ClassifyPost(string body)
         {
-            var tfs = body.ToTermFrequencyDictionary();
-            //TODO: Tokenise body html tags before calculating similarity.
-            return bow.GetSimilarity(tfs, 1);
+            var tk = PostTokeniser.TokenisePost(body);
+            var tfs = tk.ToTermFrequencyDictionary();
+            return bow.GetSimilarity(tfs, int.MaxValue);
         }
     }
 }

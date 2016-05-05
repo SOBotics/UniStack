@@ -21,17 +21,21 @@ namespace UniStack
             " {", "{\"", "{'", "} ", "}.", "},", "}?", "}!", "\"}", "'}", "}:", "};",
 
             // Double quotes.
-            " \"", "\" ", "\".", "\",", "\"?", "\"!", "\":", "\";",
+            "=\"", " \"", "\" ", "\".", "\",", "\"?", "\"!", "\":", "\";",
 
             // Single quotes.
             " '", "' ", "'.", "',", "'?", "'!", "':", "';",
 
             // Misc.
-            ". ", ": ", "; ", "- ", "?", "!", "\\", "/", ",", " ", "\r", "\n", "\t"
+            ". ", ": ", "; ", "- ", "=", "?", "!", "\\", "/", ",", " ", "\r", "\n", "\t"
         };
         private static readonly char[] strEndPunc = new[]
         {
-            '.', ')'
+            '.', ')', '(', ':', '"'
+        };
+        private static readonly char[] strStartPunc = new[]
+        {
+            '*'
         };
 
 
@@ -48,20 +52,8 @@ namespace UniStack
 
                 if (w.All(c => !char.IsLetterOrDigit(c))) continue;
 
-                var charsToRem = 0;
-                for (var i = w.Length - 1; i > 0; i--)
-                {
-                    if (strEndPunc.Contains(w[i]))
-                    {
-                        charsToRem++;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-
-                w = w.Substring(0, w.Length - charsToRem);
+                w = TrimStart(w);
+                w = TrimEnd(w);
 
                 if (tfs.ContainsKey(w))
                 {
@@ -74,6 +66,64 @@ namespace UniStack
             }
 
             return tfs;
+        }
+
+        public static double GetPunctuationRatio(this string str)
+        {
+            var punctCharCount = 0D;
+            var wordCharCount = 0;
+
+            foreach (var c in str)
+            {
+                if (char.IsPunctuation(c))
+                {
+                    punctCharCount++;
+                }
+                else if (char.IsLetterOrDigit(c))
+                {
+                    wordCharCount++;
+                }
+            }
+
+            return punctCharCount / wordCharCount;
+        }
+
+
+
+        private static string TrimEnd(string str)
+        {
+            var charsToRem = 0;
+            for (var i = str.Length - 1; i > 0; i--)
+            {
+                if (strEndPunc.Contains(str[i]))
+                {
+                    charsToRem++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return str.Substring(0, str.Length - charsToRem);
+        }
+
+        private static string TrimStart(string str)
+        {
+            var charsToRem = 0;
+            for (var i = 0; i < str.Length - 1; i++)
+            {
+                if (strStartPunc.Contains(str[i]))
+                {
+                    charsToRem++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return str.Remove(0, charsToRem);
         }
     }
 }
