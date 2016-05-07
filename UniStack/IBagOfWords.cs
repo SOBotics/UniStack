@@ -6,10 +6,10 @@ namespace UniStack
     {
         bool ContainsPost(uint postID);
 
-        void AddPost(uint postID, IDictionary<string, uint> termTFs);
+        void AddPost(uint postID, IDictionary<string, ushort> termTFs);
 
-        void RemovePost(uint postID, IDictionary<string, uint> termTFs);
+        void RemovePost(uint postID, IDictionary<string, ushort> termTFs);
 
-        Dictionary<uint, double> GetSimilarity(IDictionary<string, uint> terms, uint maxPostsToReturn);
+        Dictionary<uint, double> GetSimilarity(IDictionary<string, ushort> terms, uint maxPostsToReturn, double minSimilarity);
     }
 }

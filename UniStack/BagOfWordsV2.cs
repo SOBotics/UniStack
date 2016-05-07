@@ -58,7 +58,7 @@ namespace UniStack
             return Posts.ContainsKey(docID);
         }
 
-        public void AddPost(uint postID, IDictionary<string, uint> termTFs)
+        public void AddPost(uint postID, IDictionary<string, ushort> termTFs)
         {
             if (termTFs == null) throw new ArgumentNullException(nameof(termTFs));
             if (ContainsPost(postID))
@@ -96,7 +96,7 @@ namespace UniStack
             }
         }
 
-        public void RemovePost(uint PostID, IDictionary<string, uint> termTFs)
+        public void RemovePost(uint PostID, IDictionary<string, ushort> termTFs)
         {
             if (termTFs == null) throw new ArgumentNullException(nameof(termTFs));
             if (!ContainsPost(PostID))
@@ -135,25 +135,14 @@ namespace UniStack
                 Terms[term].IDF = 0;
             }
 
-            // Get all the post IDs.
-            var totalDocs = new HashSet<uint>();
-            foreach (var term in Terms.Values)
-            foreach (var docID in term.PostIDsByTFs.Keys)
-            {
-                if (!totalDocs.Contains(docID))
-                {
-                    totalDocs.Add(docID);
-                }
-            }
-
-            var totalDocCount = (float)totalDocs.Count;
+            var totalPostCount = (double)Posts.Count;
 
             foreach (var term in Terms.Keys)
             {
                 // How many posts contain the term?
-                var docsFound = Terms[term].PostIDsByTFs.Count;
+                var postsFound = Terms[term].PostIDsByTFs.Count;
 
-                Terms[term].IDF = (float)Math.Log(totalDocCount / docsFound, 2);
+                Terms[term].IDF = Math.Log(totalPostCount / postsFound, 2);
             }
 
             minipulatedSinceLastRecalc = false;
@@ -169,7 +158,7 @@ namespace UniStack
         /// A dictionary containing a collection of highest
         /// matching post IDs (the key) with their given similarity (the value).
         /// </returns>
-        public Dictionary<uint, double> GetSimilarity(IDictionary<string, uint> terms, uint maxPostsToReturn)
+        public Dictionary<uint, double> GetSimilarity(IDictionary<string, ushort> terms, uint maxPostsToReturn, double minSimilarity)
         {
             if (minipulatedSinceLastRecalc)
             {
@@ -259,7 +248,7 @@ namespace UniStack
             return Math.Sqrt(len);
         }
 
-        private Dictionary<string, double> CalculateQueryTfIdfVector(IDictionary<string, uint> tf)
+        private Dictionary<string, double> CalculateQueryTfIdfVector(IDictionary<string, ushort> tf)
         {
             var maxFrec = (double)tf.Max(x => x.Value);
 

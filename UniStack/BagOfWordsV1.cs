@@ -44,7 +44,7 @@ namespace UniStack
             return Terms.Values.Any(x => x.PostIDsByTFs.ContainsKey(postID));
         }
 
-        public void AddPost(uint postID, IDictionary<string, uint> termTFs)
+        public void AddPost(uint postID, IDictionary<string, ushort> termTFs)
         {
             if (termTFs == null) throw new ArgumentNullException(nameof(termTFs));
             if (ContainsPost(postID))
@@ -74,7 +74,7 @@ namespace UniStack
             }
         }
 
-        public void RemovePost(uint postID, IDictionary<string, uint> termTFs)
+        public void RemovePost(uint postID, IDictionary<string, ushort> termTFs)
         {
             if (termTFs == null) throw new ArgumentNullException(nameof(termTFs));
             if (!ContainsPost(postID))
@@ -112,24 +112,24 @@ namespace UniStack
             }
 
             // Get all the post IDs.
-            var totalDocs = new HashSet<uint>();
+            var totalPosts = new HashSet<uint>();
             foreach (var term in Terms.Values)
-            foreach (var docID in term.PostIDsByTFs.Keys)
+            foreach (var postID in term.PostIDsByTFs.Keys)
             {
-                if (!totalDocs.Contains(docID))
+                if (!totalPosts.Contains(postID))
                 {
-                    totalDocs.Add(docID);
+                    totalPosts.Add(postID);
                 }
             }
 
-            var totalDocCount = (double)totalDocs.Count;
+            var totalPostCount = (double)totalPosts.Count;
 
             foreach (var term in Terms.Keys)
             {
                 // How many posts contain the term?
-                var docsFound = Terms[term].PostIDsByTFs.Count;
+                var postsFound = Terms[term].PostIDsByTFs.Count;
 
-                Terms[term].IDF = Math.Log(totalDocCount / docsFound, 2);
+                Terms[term].IDF = Math.Log(totalPostCount / postsFound, 2);
             }
 
             minipulatedSinceLastRecalc = false;
@@ -145,7 +145,7 @@ namespace UniStack
         /// A dictionary containing a collection of highest matching post
         /// IDs (the key) with their given similarity (the value).
         /// </returns>
-        public Dictionary<uint, double> GetSimilarity(IDictionary<string, uint> terms, uint maxPostsToReturn)
+        public Dictionary<uint, double> GetSimilarity(IDictionary<string, ushort> terms, uint maxPostsToReturn, double minSimilairty)
         {
             if (minipulatedSinceLastRecalc)
             {
@@ -180,7 +180,7 @@ namespace UniStack
             var docLengths = new Dictionary<uint, double>();
             foreach (var docID in docs.Keys)
             {
-                docLengths[docID] = CalculateDocumentLength(docID, docs[docID]);
+                docLengths[docID] = CalculatePostLength(docID, docs[docID]);
             }
 
             // FINALLY, phew! We made it this far. So, now we can
@@ -216,7 +216,7 @@ namespace UniStack
             return topDocs;
         }
 
-        private double CalculateDocumentLength(uint docID, List<string> terms)
+        private double CalculatePostLength(uint postID, List<string> terms)
         {
             var len = 0D;
 
@@ -224,8 +224,9 @@ namespace UniStack
             {
                 if (Terms.ContainsKey(term))
                 {
-                    len += Terms[term].IDF * Terms[term].PostIDsByTFs[docID] *
-                           Terms[term].IDF * Terms[term].PostIDsByTFs[docID];
+                    //      the term's IDF * the term's frequency (for this post)
+                    len += Terms[term].IDF * Terms[term].PostIDsByTFs[postID] *
+                           Terms[term].IDF * Terms[term].PostIDsByTFs[postID];
                 }
             }
 
@@ -244,7 +245,7 @@ namespace UniStack
             return Math.Sqrt(len);
         }
 
-        private Dictionary<string, double> CalculateQueryTfIdfVector(IDictionary<string, uint> tf)
+        private Dictionary<string, double> CalculateQueryTfIdfVector(IDictionary<string, ushort> tf)
         {
             var maxFrec = (double)tf.Max(x => x.Value);
 

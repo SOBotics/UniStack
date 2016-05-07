@@ -27,7 +27,7 @@ namespace UniStack
         {
             var tk = PostTokeniser.TokenisePost(body);
             var tfs = tk.ToTermFrequencyDictionary();
-            return bow.GetSimilarity(tfs, int.MaxValue);
+            return bow.GetSimilarity(tfs, int.MaxValue, 0);
         }
     }
 }

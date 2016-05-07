@@ -43,9 +43,9 @@ namespace UniStack
 
 
         // Faster than using a compiled regex.
-        public static Dictionary<string, uint> ToTermFrequencyDictionary(this string str)
+        public static Dictionary<string, ushort> ToTermFrequencyDictionary(this string str)
         {
-            var tfs = new Dictionary<string, uint>();
+            var tfs = new Dictionary<string, ushort>();
             var words = str.ToLowerInvariant().Split(wordDelimeters, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var wrd in words)
