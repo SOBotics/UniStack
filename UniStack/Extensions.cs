@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -40,7 +42,7 @@ namespace UniStack
 
 
 
-        // ~30% faster than using a compiled regex.
+        // Faster than using a compiled regex.
         public static Dictionary<string, uint> ToTermFrequencyDictionary(this string str)
         {
             var tfs = new Dictionary<string, uint>();
@@ -87,6 +89,37 @@ namespace UniStack
 
             return punctCharCount / wordCharCount;
         }
+
+        //public static byte[] Compress(this string str)
+        //{
+        //    var strBytes = Encoding.UTF8.GetBytes(str);
+        //    byte[] zipped;
+
+        //    using (var compStrm = new MemoryStream())
+        //    {
+        //        using (var zipper = new GZipStream(compStrm, CompressionMode.Compress))
+        //        using (var ms = new MemoryStream(strBytes))
+        //        {
+        //            ms.CopyTo(zipper);
+        //        }
+
+        //        zipped = compStrm.ToArray();
+        //    }
+
+        //    return zipped;
+        //}
+
+        //public static string Decompress(this byte[] bytes)
+        //{
+        //    using (var msIn = new MemoryStream(bytes))
+        //    using (var unzipper = new GZipStream(msIn, CompressionMode.Decompress))
+        //    using (var msOut = new MemoryStream())
+        //    {
+        //        unzipper.CopyTo(msOut);
+        //        var unzipped = msOut.ToArray();
+        //        return Encoding.UTF8.GetString(unzipped);
+        //    }
+        //}
 
 
 

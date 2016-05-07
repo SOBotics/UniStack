@@ -158,7 +158,7 @@ namespace UniStack
             // To prevent calculating the similarity of EVERY document,
             // we'll take all the documents which actually contain at least 
             // one of the query's terms.
-            var matchingTerms = Terms.Values.Where(x => terms.Keys.Any(y => y == x.Value));
+            var matchingTerms = Terms.Values.Where(x => terms.ContainsKey(x.Value));
             var matchingDocIDs = new HashSet<uint>();
             foreach (var term in matchingTerms)
             foreach (var docID in term.PostIDsByTFs.Keys)

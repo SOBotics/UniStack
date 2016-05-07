@@ -182,14 +182,14 @@ namespace UniStack
             // To prevent calculating the similarity of EVERY post,
             // we'll take all the posts which actually contain at least 
             // one of the query's terms.
-            var matchingTerms = Terms.Values.Where(x => terms.Keys.Any(y => y == x.Value));
             var matchingPostIDs = new HashSet<uint>();
-            foreach (var term in matchingTerms)
-            foreach (var postID in term.PostIDsByTFs.Keys)
+            foreach (var p in Posts)
+            foreach (var t in p.Value.TermsByTFs.Keys)
             {
-                if (!matchingPostIDs.Contains(postID))
+                if (terms.ContainsKey(t))
                 {
-                    matchingPostIDs.Add(postID);
+                    matchingPostIDs.Add(p.Key);
+                    break;
                 }
             }
 
