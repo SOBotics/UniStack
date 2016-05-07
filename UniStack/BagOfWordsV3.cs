@@ -46,9 +46,16 @@ namespace UniStack
             minipulatedSinceLastRecalc = true;
         }
 
-        public void RemovePost(uint postID, IDictionary<string, ushort> termTFs)
+        public void RemovePost(uint postID, IDictionary<string, ushort> postTFs = null) //TODO: We should really just remove this param.
         {
-            throw new NotImplementedException();
+            if (!ContainsPost(postID))
+            {
+                throw new KeyNotFoundException("Cannot find any posts with the specified ID.");
+            }
+
+            minipulatedSinceLastRecalc = true;
+
+            tfIdfMatrix.Remove(postID);
         }
 
         public Dictionary<uint, double> GetSimilarity(IDictionary<string, ushort> queryTerms, uint maxPostsToReturn, double minSimilarity)
@@ -62,14 +69,12 @@ namespace UniStack
             var queryTfIdfs = new Dictionary<string, float>();
             var maxQueryTermCount = (float)queryTerms.Max(x => x.Value);
             foreach (var qt in queryTerms)
+            foreach (var p in tfIdfMatrix.Values)
             {
-                foreach (var p in tfIdfMatrix.Values)
+                if (p.Terms.ContainsKey(qt.Key))
                 {
-                    if (p.Terms.ContainsKey(qt.Key))
-                    {
-                        queryTfIdfs[qt.Key] = p.Terms[qt.Key].Idf * (qt.Value / maxQueryTermCount);
-                        break;
-                    }
+                    queryTfIdfs[qt.Key] = p.Terms[qt.Key].Idf * (qt.Value / maxQueryTermCount);
+                    break;
                 }
             }
 
@@ -88,13 +93,11 @@ namespace UniStack
                 var sim = 0D;
 
                 foreach (var qt in queryTfIdfs)
+                foreach (var t in p.Terms.Values)
                 {
-                    foreach (var t in p.Terms.Values)
+                    if (t.Term == qt.Key)
                     {
-                        if (t.Term == qt.Key)
-                        {
-                            sim += t.TfIdf * qt.Value;
-                        }
+                        sim += t.TfIdf * qt.Value;
                     }
                 }
 
@@ -144,13 +147,17 @@ namespace UniStack
                         }
                     }
 
+                    // Calculate the term's IDF.
                     var termIdf = (float)Math.Log(postCount / postsContaingTerm, 2);
+
                     foreach (var pID in tfIdfMatrix.Keys)
                     foreach (var t in tfIdfMatrix[pID].Terms.Keys)
                     {
                         if (t == termStr)
                         {
                             tfIdfMatrix[pID].Terms[t].Idf = termIdf;
+
+                            // And calc the term's TF-IDF vector.
                             tfIdfMatrix[pID].Terms[t].TfIdf = termIdf * tfIdfMatrix[pID].Terms[t].TF;
                             break;
                         }
@@ -159,6 +166,8 @@ namespace UniStack
                     processedTerms.Add(termStr);
                 }
 
+                // Now that we have all the terms' TF-IDF vectors,
+                // we can calc the post's length.
                 var len = 0F;
                 foreach (var t in tfIdfMatrix[id].Terms)
                 {
