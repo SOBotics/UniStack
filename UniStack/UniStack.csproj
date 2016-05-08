@@ -120,21 +120,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BagOfWordsV1.cs" />
-    <Compile Include="BagOfWordsV2.cs" />
-    <Compile Include="BagOfWordsV3.cs" />
+    <Compile Include="BagOfWords.cs" />
     <Compile Include="Database\DB.cs" />
     <Compile Include="Database\Post.cs" />
     <Compile Include="Database\Term.cs" />
     <Compile Include="DupeClassifier.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="IBagOfWords.cs" />
-    <Compile Include="Post.cs" />
     <Compile Include="PostTokeniser.cs" />
-    <Compile Include="PostV2.cs" />
+    <Compile Include="Post.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Term.cs" />
-    <Compile Include="TermV2.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

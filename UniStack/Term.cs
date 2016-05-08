@@ -1,13 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace UniStack
 {
     public class Term
     {
-        public Dictionary<uint, uint> PostIDsByTFs { get; set; }
-
-        public string Value { get; set; }
-
-        public double IDF { get; set; }
+        public ushort TF { get; set; }
+        public float Vector { get; set; }
+        public float Idf { get; set; }
     }
 }

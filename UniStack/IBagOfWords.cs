@@ -8,7 +8,7 @@ namespace UniStack
 
         void AddPost(uint postID, IDictionary<string, ushort> termTFs);
 
-        void RemovePost(uint postID, IDictionary<string, ushort> termTFs);
+        void RemovePost(uint postID);
 
         Dictionary<uint, double> GetSimilarity(IDictionary<string, ushort> terms, uint maxPostsToReturn, double minSimilarity);
     }
