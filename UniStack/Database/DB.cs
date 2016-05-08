@@ -9,6 +9,10 @@ namespace UniStack.Database
 {
     public class DB : DbContext
     {
+        public DbSet<Post> Posts { get; set; }
+        public DbSet<Term> Terms { get; set; }
+
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder opts)
         {

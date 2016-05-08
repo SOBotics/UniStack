@@ -9,9 +9,11 @@ namespace UniStack.Database
 {
     public class Term
     {
-        [Key]
+        public int ID { get; set; }
         public string Value { get; set; }
-        public Dictionary<uint, uint> PostIDsByTFs { get; set; }
-        public double Idf { get; set; }
+        public int PostID { get; set; }
+        public int TF { get; set; }
+        public float Idf { get; set; }
+        public float TfIdf { get; set; }
     }
 }

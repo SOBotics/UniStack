@@ -8,7 +8,8 @@ namespace UniStack.Database
 {
     public class Post
     {
-        public uint ID { get; set; }
-        //public Dictionary<string,>
+        public int PostID { get; set; }
+        public float Length { get; set; }
+        public virtual ICollection<Term> Terms { get; set; }
     }
 }
