@@ -16,7 +16,6 @@ namespace UniStack.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder opts)
         {
-            opts.UseNpgsql("Server=localhost;Port=5432;Username=postgres;Password=icecave17;Database=unistackTest");
 
             //var cfg = Configs.DatabaseConfig.ToStringDictionary();
             //var cnStr = cfg.Keys.Zip(cfg.Values, (k, v) => $"{k}={v};").Aggregate((c, n) => c + n);
