@@ -39,6 +39,29 @@ namespace UniStack
         {
             '*'
         };
+        private static readonly Dictionary<string, string> contractions = new Dictionary<string, string>
+        {
+            // Specific words.
+            ["ain't"] = "am not",
+            ["aint"] = "am not",
+            ["amn't"] = "",
+            ["amnt"] = "am not",
+            ["can't"] = "cannot",
+            ["gonna"] = "going to",
+            ["i'm"] = "i am",
+            ["im"] = "i am",
+            ["it's"] = "it is",
+            ["let's"] = "let us",
+            ["lets"] = "let us",
+            ["ol'"] = "old",
+            ["wanna"] = "want to",
+            ["y'all"] = "you all",
+
+            // General/misc contractions.
+            ["n't"] = " not",
+            ["'ve"] = " have",
+            ["'ll"] = " will"
+        };
 
 
 
@@ -90,36 +113,17 @@ namespace UniStack
             return punctCharCount / wordCharCount;
         }
 
-        //public static byte[] Compress(this string str)
-        //{
-        //    var strBytes = Encoding.UTF8.GetBytes(str);
-        //    byte[] zipped;
+        public static string ExpandContractions(this string str)
+        {
+            var expanded = str.ToLowerInvariant();
 
-        //    using (var compStrm = new MemoryStream())
-        //    {
-        //        using (var zipper = new GZipStream(compStrm, CompressionMode.Compress))
-        //        using (var ms = new MemoryStream(strBytes))
-        //        {
-        //            ms.CopyTo(zipper);
-        //        }
+            foreach (var c in contractions)
+            {
+                expanded = expanded.Replace(c.Key, c.Value);
+            }
 
-        //        zipped = compStrm.ToArray();
-        //    }
-
-        //    return zipped;
-        //}
-
-        //public static string Decompress(this byte[] bytes)
-        //{
-        //    using (var msIn = new MemoryStream(bytes))
-        //    using (var unzipper = new GZipStream(msIn, CompressionMode.Decompress))
-        //    using (var msOut = new MemoryStream())
-        //    {
-        //        unzipper.CopyTo(msOut);
-        //        var unzipped = msOut.ToArray();
-        //        return Encoding.UTF8.GetString(unzipped);
-        //    }
-        //}
+            return expanded;
+        }
 
 
 

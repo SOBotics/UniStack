@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace UniStack
 {
-    public class DupeClassifier
+    public class DupeClassifierDB
     {
-        private readonly BagOfWords bow;
+        private readonly BagOfWordsDB bow;
 
-        public BagOfWords BagOfWords { get { return bow; } }
+        public BagOfWordsDB BagOfWordsDB { get { return bow; } }
 
 
 
-        public DupeClassifier(BagOfWords bagOfWords)
+        public DupeClassifierDB(BagOfWordsDB bagOfWords)
         {
             if (bagOfWords == null) throw new ArgumentNullException(nameof(bagOfWords));
 
@@ -23,12 +23,12 @@ namespace UniStack
 
 
 
-        public Dictionary<uint, double> ClassifyPost(string body)
+        public Dictionary<int, double> ClassifyPost(string body, string topTag)
         {
             var tk = PostTokeniser.TokenisePost(body);
             var expanded = tk.ExpandContractions();
             var tfs = expanded.ToTermFrequencyDictionary();
-            return bow.GetSimilarity(tfs, int.MaxValue, 0);
+            return bow.GetSimilarity(tfs, topTag);
         }
     }
 }

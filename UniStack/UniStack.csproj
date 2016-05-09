@@ -120,13 +120,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BagOfWordsDB.cs" />
     <Compile Include="BagOfWords.cs" />
     <Compile Include="Database\DB.cs" />
     <Compile Include="Database\Post.cs" />
     <Compile Include="Database\Term.cs" />
     <Compile Include="DupeClassifier.cs" />
+    <Compile Include="DupeClassifierDB.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="IBagOfWords.cs" />
     <Compile Include="PostTokeniser.cs" />
     <Compile Include="Post.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

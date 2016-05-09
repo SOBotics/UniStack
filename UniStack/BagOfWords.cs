@@ -12,7 +12,7 @@ namespace UniStack
     /// 
     /// This object is NOT thread-safe.
     /// </summary>
-    public class BagOfWords : IBagOfWords
+    public class BagOfWords
     {
         private readonly Dictionary<uint, Post> vectorMatrix = new Dictionary<uint, Post>();
         private bool minipulatedSinceLastRecalc = true;
