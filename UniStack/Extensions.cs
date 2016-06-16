@@ -61,9 +61,9 @@ namespace UniStack
 
 
         // Faster than using a compiled regex.
-        public static Dictionary<string, ushort> ToTermFrequencyDictionary(this string str)
+        public static Dictionary<int, short> ToTermFrequencyDictionary(this string str)
         {
-            var tfs = new Dictionary<string, ushort>();
+            var tfs = new Dictionary<int, short>();
             var words = str.ToLowerInvariant().Split(wordDelimeters, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var wrd in words)
@@ -75,13 +75,15 @@ namespace UniStack
                 w = TrimStart(w);
                 w = TrimEnd(w);
 
-                if (tfs.ContainsKey(w))
+                var hash = w.GetStringHashCode();
+
+                if (tfs.ContainsKey(hash))
                 {
-                    tfs[w]++;
+                    tfs[hash]++;
                 }
                 else
                 {
-                    tfs[w] = 1;
+                    tfs[hash] = 1;
                 }
             }
 
@@ -118,6 +120,18 @@ namespace UniStack
             }
 
             return expanded;
+        }
+
+        public static int GetStringHashCode(this string str)
+        {
+            var hash = 23;
+
+            foreach (var c in str)
+            {
+                hash = hash * 33 + c;
+            }
+
+            return hash;
         }
 
 

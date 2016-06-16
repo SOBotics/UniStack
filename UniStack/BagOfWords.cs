@@ -9,17 +9,23 @@ namespace UniStack
     /// Similarity function: cosine.
     /// 
     /// This object is NOT thread-safe.
+    /// 
+    /// This was my first attempt at creating
+    /// a cosine sim algo for a bag of words
+    /// model, this class solely exists for
+    /// as a reference. Use the V2 or DB
+    /// implementation for better performance.
     /// </summary>
     public class BagOfWords
     {
-        private readonly Dictionary<uint, Post> vectorMatrix = new Dictionary<uint, Post>();
+        public readonly Dictionary<uint, Post> posts = new Dictionary<uint, Post>();
         private bool minipulatedSinceLastRecalc = true;
 
 
 
         public bool ContainsPost(uint postID)
         {
-            return vectorMatrix.ContainsKey(postID);
+            return posts.ContainsKey(postID);
         }
 
         public void AddPost(uint postID, IDictionary<string, ushort> postTFs)
@@ -40,9 +46,8 @@ namespace UniStack
                 };
             }
 
-            vectorMatrix.Add(postID, new Post
+            posts.Add(postID, new Post
             {
-                ID = postID,
                 Terms = terms
             });
 
@@ -58,7 +63,7 @@ namespace UniStack
 
             minipulatedSinceLastRecalc = true;
 
-            vectorMatrix.Remove(postID);
+            posts.Remove(postID);
         }
 
         public Dictionary<uint, double> GetSimilarity(IDictionary<string, ushort> queryTerms, uint maxPostsToReturn, double minSimilarity)
@@ -82,7 +87,7 @@ namespace UniStack
             // Generate the query's TF-IDF values (vectors).
             var queryTfIdfs = new Dictionary<string, float>();
             foreach (var qt in queryTerms)
-            foreach (var p in vectorMatrix.Values)
+            foreach (var p in posts.Values)
             {
                 if (p.Terms.ContainsKey(qt.Key))
                 {
@@ -101,7 +106,7 @@ namespace UniStack
 
             // Get the similarities.
             var simResults = new Dictionary<uint, double>();
-            foreach (var p in vectorMatrix)
+            foreach (var p in posts)
             {
                 var sim = 0D;
 
@@ -109,7 +114,7 @@ namespace UniStack
                 {
                     if (p.Value.Terms.ContainsKey(qt.Key))
                     {
-                        //         post TF-IDF vector      * query post TF-IDF vector
+                        //          post TF-IDF vector      * query post TF-IDF vector
                         sim += p.Value.Terms[qt.Key].Vector * qt.Value;
                     }
                 }
@@ -139,18 +144,18 @@ namespace UniStack
 
         private void RecalculateData()
         {
-            var postCount = (float)vectorMatrix.Count;
+            var postCount = (float)posts.Count;
             var processedTerms = new HashSet<string>();
 
-            foreach (var id in vectorMatrix.Keys)
+            foreach (var id in posts.Keys)
             {
-                foreach (var termStr in vectorMatrix[id].Terms.Keys)
+                foreach (var termStr in posts[id].Terms.Keys)
                 {
                     if (processedTerms.Contains(termStr)) continue;
 
                     // Count how many posts contain the term.
                     var postsContaingTerm = 0;
-                    foreach (var p in vectorMatrix)
+                    foreach (var p in posts)
                     {
                         if (p.Value.Terms.ContainsKey(termStr))
                         {
@@ -161,14 +166,14 @@ namespace UniStack
                     // Calculate the term's IDF.
                     var termIdf = (float)Math.Log(postCount / postsContaingTerm, 2);
 
-                    foreach (var pID in vectorMatrix.Keys)
+                    foreach (var pID in posts.Keys)
                     {
-                        if (vectorMatrix[pID].Terms.ContainsKey(termStr))
+                        if (posts[pID].Terms.ContainsKey(termStr))
                         {
-                            vectorMatrix[pID].Terms[termStr].Idf = termIdf;
+                            posts[pID].Terms[termStr].Idf = termIdf;
 
                             // And calc the term's TF-IDF vector.
-                            vectorMatrix[pID].Terms[termStr].Vector = termIdf * vectorMatrix[pID].Terms[termStr].TF;
+                            posts[pID].Terms[termStr].Vector = termIdf * posts[pID].Terms[termStr].TF;
                         }
                     }
 
@@ -178,12 +183,12 @@ namespace UniStack
                 // Now that we have all the terms' TF-IDF vectors,
                 // we can calc the post's length.
                 var len = 0F;
-                foreach (var t in vectorMatrix[id].Terms)
+                foreach (var t in posts[id].Terms)
                 {
                     len += t.Value.Vector * t.Value.Vector;
                 }
 
-                vectorMatrix[id].Length = (float)Math.Sqrt(len);
+                posts[id].Length = (float)Math.Sqrt(len);
             }
         }
     }

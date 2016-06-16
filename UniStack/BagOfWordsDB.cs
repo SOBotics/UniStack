@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Data.Entity;
+using System.Text;
+using Npgsql;
 using UniStack.Database;
 
 namespace UniStack
@@ -14,77 +15,94 @@ namespace UniStack
     /// </summary>
     public class BagOfWordsDB
     {
-        private bool minipulatedSinceLastRecalc = true;
+        private readonly NpgsqlConnectionStringBuilder conStrBuilder;
+        private bool minipulatedSinceLastRecalc;
 
 
 
-        public BagOfWordsDB()
+        public BagOfWordsDB(NpgsqlConnectionStringBuilder connectionStringBuilder)
         {
-            var db = new DB();
+            conStrBuilder = connectionStringBuilder;
 
-            db.Database.EnsureCreated();
+            var db = new DB(conStrBuilder);
         }
 
 
 
         public bool ContainsPost(int postID)
         {
-            using (var db = new DB())
-            {
-                return db.Posts.Any(x => x.PostID == postID);
-            }
+            var db = new DB(conStrBuilder, true);
+
+            return db.PostExists(postID);
         }
 
-        public void AddPost(int postID, string tags, IDictionary<string, ushort> postTFs)
+        public void AddPost(int postID, string tags, IDictionary<int, short> termHashesByCount)
         {
-            if (postTFs == null) throw new ArgumentNullException(nameof(postTFs));
-            if (ContainsPost(postID))
-            {
-                throw new ArgumentException("A post with this ID already exists.", nameof(postID));
-            }
+            //TODO: Upgrade this to something "better". Not sure what yet...
 
-            minipulatedSinceLastRecalc = true;
+            //if (termHashesByCount == null) throw new ArgumentNullException(nameof(termHashesByCount));
+            //if (ContainsPost(postID))
+            //{
+            //    throw new ArgumentException("A post with this ID already exists.", nameof(postID));
+            //}
 
-            using (var db = new DB())
-            {
-                foreach (var t in postTFs)
-                {
-                    db.Terms.Add(new Database.Term
-                    {
-                        PostID = postID,
-                        Value = t.Key,
-                        TF = t.Value
-                    });
-                }
+            //minipulatedSinceLastRecalc = true;
 
-                db.Posts.Add(new Database.Post
-                {
-                    PostID = postID,
-                    Tags = tags
-                });
+            //var db = new DB(conStrBuilder, true);
 
-                db.SaveChanges();
-            }
+            //db.AddPost(new Database.Post
+            //{
+            //    PostID = postID,
+            //    Tags = tags
+            //});
+
+            //foreach (var t in termHashesByCount)
+            //{
+            //    if (!db.GlobalTermExists(t.Key))
+            //    {
+            //        db.AddGlobalTerm(new GlobalTerm
+            //        {
+            //            Value = t.Key
+            //        });
+            //    }
+
+            //    db.AddLocalTerm(new LocalTerm(conStrBuilder)
+            //    {
+            //        PostID = postID,
+            //        Value = t.Key,
+            //        TF = t.Value
+            //    });
+            //}
+
+            throw new NotImplementedException();
         }
 
         public void RemovePost(int postID)
         {
-            if (!ContainsPost(postID))
-            {
-                throw new KeyNotFoundException("Cannot find any posts with the specified ID.");
-            }
+            //TODO: Upgrade this to something "better". Not sure what yet...
 
-            minipulatedSinceLastRecalc = true;
+            //if (!ContainsPost(postID))
+            //{
+            //    throw new KeyNotFoundException("Cannot find any posts with the specified ID.");
+            //}
 
-            using (var db = new DB())
-            {
-                var p = db.Posts.Single(x => x.PostID == postID);
-                db.Posts.Remove(p);
-                db.SaveChanges();
-            }
+            //minipulatedSinceLastRecalc = true;
+
+            //var db = new DB(conStrBuilder, true);
+
+            //var p = db.Posts.Single(x => x.PostID == postID);
+
+            //foreach (var t in p.Terms)
+            //{
+            //    db.LocalTerms.Remove(t);
+            //}
+
+            //db.Posts.Remove(p);
+
+            throw new NotImplementedException();
         }
 
-        public Dictionary<int, double> GetSimilarity(IDictionary<string, ushort> queryTerms, string postTopTag, uint maxPostsToReturn = uint.MaxValue, double minSimilarity = 0)
+        public Dictionary<int, float> GetSimilarity(IDictionary<int, short> queryTermHashesByCount, string postTopTag, uint maxPostsToReturn = uint.MaxValue, double minSimilarity = 0)
         {
             if (minipulatedSinceLastRecalc)
             {
@@ -92,127 +110,166 @@ namespace UniStack
                 minipulatedSinceLastRecalc = false;
             }
 
-            using (var db = new DB())
+            var queryLen = -1F;
+            var queryVectors = GetQueryVectors(queryTermHashesByCount, out queryLen);
+
+            var sql = new StringBuilder(@"CREATE TEMP TABLE queryterms
+                                          (
+                                              value  int4   PRIMARY KEY,
+                                              vector float4
+                                          );
+                                          INSERT INTO queryterms VALUES ");
+
+            foreach (var term in queryVectors)
             {
-                var postsWithTag = db.Posts.Include(p => p.Terms).Where(x => x.Tags.Contains(postTopTag));
-
-                // Get the count of the most common term in the query. (Slightly faster than using Linq.)
-                var maxQueryTermCount = 0F;
-                foreach (var qt in queryTerms)
-                {
-                    if (qt.Value > maxQueryTermCount)
-                    {
-                        maxQueryTermCount = qt.Value;
-                    }
-                }
-
-                // Generate the query's TF-IDF values (vectors).
-                var queryTfIdfs = new Dictionary<string, float>();
-                foreach (var qt in queryTerms)
-                foreach (var p in postsWithTag)
-                {
-                    var t = p.Terms.SingleOrDefault(x => x.Value == qt.Key);
-
-                    if (t != null)
-                    {
-                        queryTfIdfs[qt.Key] = t.Idf * (qt.Value / maxQueryTermCount);
-                        break;
-                    }
-                }
-
-                // Calculate the query's Euclidean length.
-                var queryLen = 0F;
-                foreach (var tfIdf in queryTfIdfs.Values)
-                {
-                    queryLen += tfIdf * tfIdf;
-                }
-                queryLen = (float)Math.Sqrt(queryLen);
-
-                // Get the similarities.
-                var simResults = new Dictionary<int, double>();
-                foreach (var p in postsWithTag)
-                {
-                    var sim = 0D;
-
-                    foreach (var qt in queryTfIdfs)
-                    {
-                        var t = p.Terms.SingleOrDefault(x => x.Value == qt.Key);
-
-                        if (t != null)
-                        {
-                            // post TF-IDF vector * query post TF-IDF vector
-                            sim += t.Vector * qt.Value;
-                        }
-                    }
-
-                    sim /= queryLen * p.Length;
-
-                    if (sim < minSimilarity) continue;
-
-                    simResults[p.PostID] = sim;
-                }
-
-                // Return only the top x posts.
-                var topPosts = new Dictionary<int, double>();
-                var temp = simResults.OrderByDescending(x => x.Value);
-                var safeMax = Math.Min(simResults.Count, maxPostsToReturn);
-                foreach (var doc in temp)
-                {
-                    if (topPosts.Count == safeMax) break;
-
-                    topPosts[doc.Key] = doc.Value;
-                }
-
-                return topPosts;
+                sql.Append("(");
+                sql.Append(term.Key);
+                sql.Append(",");
+                sql.Append(term.Value);
+                sql.Append("),");
             }
+
+            sql.Length -= 1;
+            sql.Append(";");
+
+            sql.Append(@"CREATE TEMP TABLE tempposts AS
+                         SELECT posts.postid, posts.length, localterms.vector AS lterm, queryterms.vector AS qterm FROM posts
+                         INNER JOIN localterms ON posts.postid = localterms.postid
+                         INNER JOIN queryterms ON localterms.value = queryterms.value
+                         WHERE localterms.value IN (");
+
+            foreach (var termHash in queryTermHashesByCount.Keys)
+            {
+                sql.Append(termHash);
+                sql.Append(",");
+            }
+
+            sql.Length -= 1;
+            sql.Append(");");
+
+            sql.Append($@"SELECT postid, SUM(lterm * qterm) / (length * {queryLen}) AS sim
+                          FROM tempposts
+                          GROUP BY postid, length
+                          ORDER BY sim DESC
+                          LIMIT {maxPostsToReturn};");
+
+            var simResults = new Dictionary<int, float>();
+            using (var con = new NpgsqlConnection(conStrBuilder))
+            using (var cmd = new NpgsqlCommand(sql.ToString(), con))
+            {
+                con.Open();
+
+                var reader = cmd.ExecuteReader();
+
+                foreach (var entry in reader)
+                {
+                    var postID = (int)reader["postid"];
+                    var sim = (double)reader["sim"];
+
+                    simResults[postID] = (float)sim;
+                }
+            }
+
+            return simResults;
         }
 
 
 
+        private Dictionary<int, float> GetQueryVectors(IDictionary<int, short> queryTermHashesByCount, out float queryLength)
+        {
+            var db = new DB(conStrBuilder, true);
+
+            // Get the count of the most common term in the query.
+            var maxQueryTermCount = 0F;
+            foreach (var qt in queryTermHashesByCount)
+            {
+                if (qt.Value > maxQueryTermCount)
+                {
+                    maxQueryTermCount = qt.Value;
+                }
+            }
+
+            // Generate the query's TF-IDF values (vectors).
+            var queryVectors = new Dictionary<int, float>();
+            foreach (var qt in queryTermHashesByCount)
+            {
+                if (db.GlobalTermExists(qt.Key))
+                {
+                    var termIdf = db.GetGlobalTerm(qt.Key).Idf;
+                    queryVectors[qt.Key] = termIdf * (qt.Value / maxQueryTermCount);
+                }
+            }
+
+            // Calculate the query's Euclidean length.
+            var queryLen = 0F;
+            foreach (var tfIdf in queryVectors.Values)
+            {
+                queryLen += tfIdf * tfIdf;
+            }
+            queryLength = (float)Math.Sqrt(queryLen);
+
+            return queryVectors;
+        }
+
         private void RecalculateData()
         {
-            using (var db = new DB())
+            var getPostCount = "SELECT count(*) FROM posts;";
+
+            var updateIdfs = @"UPDATE globalterms
+                               SET idf = 
+                               (
+                                   SELECT log(2, <postCount>.0 / count(*))
+                                   FROM localterms
+                                   WHERE localterms.value = globalterms.value
+                                   GROUP BY value
+                               );";
+
+            var updateVectors = $@"CREATE TEMP TABLE tempterms AS
+                                   SELECT localterms.value, postid, tf * idf AS vector
+                                   FROM localterms
+                                   INNER JOIN globalterms on localterms.value = globalterms.value;
+
+                                   UPDATE localterms
+                                   SET vector = tempterms.vector
+                                   FROM tempterms
+                                   WHERE localterms.value = tempterms.value 
+                                   AND localterms.postid = tempterms.postid;";
+
+            var updateLength = @"UPDATE posts
+                                 SET length =
+                                 (
+                                     SELECT |/ sum(vector * vector)
+                                     FROM localterms
+                                     WHERE localterms.postid = posts.postid
+                                 );";
+
+            using (var con = new NpgsqlConnection(conStrBuilder))
             {
-                var postCount = (float)db.Posts.Count();
+                con.Open();
 
-                var termsByPostCount = db.Terms
-                    .GroupBy(x => x.Value)
-                    .Select(x => x.First())
-                    .Select(x => new
-                     {
-                         Term = x,
-                         Count = db.Posts.Count(p => p.Terms.Any(t => t.Value == x.Value))
-                     });
+                var postCount = -1L;
 
-                foreach (var term in termsByPostCount)
+                using (var cmd = new NpgsqlCommand(getPostCount, con))
                 {
-                    var termIdf = (float)Math.Log(postCount / term.Count, 2);
-
-                    foreach (var p in db.Posts.Include(p => p.Terms))
-                    {
-                        var t = p.Terms.SingleOrDefault(x => x.Value == term.Term.Value);
-
-                        if (t != null)
-                        {
-                            t.Idf = termIdf;
-                            t.Vector = termIdf * t.TF; 
-                        }
-                    }
+                    postCount = cmd.ExecuteScalar() as long? ?? -1;
                 }
 
-                foreach (var p in db.Posts)
+                updateIdfs = updateIdfs.Replace("<postCount>", postCount.ToString());
+
+                using (var cmd = new NpgsqlCommand(updateIdfs, con))
                 {
-                    var len = 0F;
-
-                    foreach (var t in p.Terms)
-                    {
-                        len += t.Vector * t.Vector;
-                    }
-
-                    p.Length = (float)Math.Sqrt(len);
+                    cmd.ExecuteNonQuery();
                 }
 
-                db.SaveChanges();
+                using (var cmd = new NpgsqlCommand(updateVectors, con))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                using (var cmd = new NpgsqlCommand(updateLength, con))
+                {
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
     }

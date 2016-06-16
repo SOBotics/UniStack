@@ -22,10 +22,10 @@ namespace UniStack
 
         public Dictionary<int, double> ClassifyPost(string body, string topTag)
         {
-            var tk = PostTokeniser.TokenisePost(body);
-            var expanded = tk.ExpandContractions();
-            var tfs = expanded.ToTermFrequencyDictionary();
-            return bow.GetSimilarity(tfs, topTag);
+            //var tk = PostTokeniser.TokenisePost(body);
+            //var expanded = tk.ExpandContractions();
+            //var tfs = expanded.ToTermFrequencyDictionary();
+            return null;// bow.GetSimilarity(tfs, topTag);
         }
     }
 }

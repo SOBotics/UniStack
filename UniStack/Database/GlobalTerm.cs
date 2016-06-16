@@ -3,30 +3,30 @@ using Npgsql;
 
 namespace UniStack.Database
 {
-    public class Post
+    public class GlobalTerm
     {
         private NpgsqlConnectionStringBuilder conStr;
-        private float? length;
+        private float? idf;
 
-        public int PostID { get; set; }
+        public int Value { get; set; }
 
-        public float Length
+        public float Idf
         {
             get
             {
-                return length ?? 0;
+                return idf ?? 0;
             }
             set
             {
-                if (conStr == null || length == null)
+                if (conStr == null || idf == null)
                 {
-                    length = value;
+                    idf = value;
                     return;
                 }
 
-                length = value;
+                idf = value;
 
-                var cmdStr = $"UPDATE posts SET length = {value} WHERE postid = {PostID};";
+                var cmdStr = $"UPDATE globalterms SET idf = {value} WHERE value = {Value};";
 
                 using (var con = new NpgsqlConnection(conStr))
                 using (var cmd = new NpgsqlCommand(cmdStr, con))
@@ -37,16 +37,13 @@ namespace UniStack.Database
             }
         }
 
-        public string Tags { get; set; }
-
         public IEnumerable<LocalTerm> LTerms
         {
             get
             {
                 if (conStr == null) yield break;
 
-                // No need to parameterise this.
-                var cmdStr = $"SELECT * FROM localterms WHERE postid = {PostID};";
+                var cmdStr = $"SELECT * FROM localterms WHERE value = {Value};";
 
                 using (var con = new NpgsqlConnection(conStr))
                 using (var cmd = new NpgsqlCommand(cmdStr, con))
@@ -72,7 +69,7 @@ namespace UniStack.Database
 
 
 
-        public Post(NpgsqlConnectionStringBuilder connection = null)
+        public GlobalTerm(NpgsqlConnectionStringBuilder connection = null)
         {
             conStr = connection;
         }
