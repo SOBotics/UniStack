@@ -1,6 +1,6 @@
 # UniStack
 
-## Current algorithm (v1.2)
+## Current algorithm (v1.3)
 
 The current algorithm only applies to "popular" tags (the number of tags supported will depend on your hardware, i.e., RAM).
 
@@ -20,7 +20,9 @@ The current algorithm only applies to "popular" tags (the number of tags support
 
  4. Split the items into an array of words (whilst removing punctuation and whitespace).
  
- 5. Generate a word/frequency dictionary from the array of words.
+ 5. Hash each word to generate a new array.
+ 
+ 5. Generate a dictionary from the array of hashed words (where the key is the hash, and the value is the number of occurrences of the hash).
 
  6. This dictionary is now your model of the question.
 
