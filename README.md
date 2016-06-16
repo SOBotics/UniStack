@@ -2,8 +2,6 @@
 
 ## Current algorithm (v1.3)
 
-The current algorithm only applies to "popular" tags (the number of tags supported will depend on your hardware, i.e., RAM).
-
 ### Generating question models 
 
  1. Tokenise the question's *body* (including html, leave the title, tags, etc.) into "tags" which will represent non-plain-text characteristics of the post, currently: links, pictures, code blocks and inline code (backticked text).
@@ -22,9 +20,9 @@ The current algorithm only applies to "popular" tags (the number of tags support
  
  5. Hash each word to generate a new array.
  
- 5. Generate a dictionary from the array of hashed words (where the key is the hash, and the value is the number of occurrences of the hash).
+ 6. Generate a dictionary from the array of hashed words (where the key is the hash, and the value is the number of occurrences of the hash).
 
- 6. This dictionary is now your model of the question.
+ 7. This dictionary is now your model of the question.
 
 ### To search for duplicates
  
@@ -38,10 +36,10 @@ The current algorithm only applies to "popular" tags (the number of tags support
  
 ### To initialise the search engine
 
- 1. Take a list of the top *x* most popular tags on Stack Overflow.
- 
+ 1. Take a list of tags from Stack Overflow.
+
  2. For each tag:
  
-  I. Create a new bag of words object.
+  I. Create a new set of tables (using RDS of your choice): one for "all words", one for posts, and one for distinct words. (More detailed info on the way.)
   
-  II. Generate a model for each post in the tag and add it to the object's "bag".
+  II. Generate a model for each post in the tag and save the appropriate pieces of data to the tables. (Again, further info planned.)
