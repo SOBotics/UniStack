@@ -31,8 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Npgsql, Version=3.1.3.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
-      <HintPath>..\packages\Npgsql.3.1.3\lib\net451\Npgsql.dll</HintPath>
+    <Reference Include="Npgsql, Version=3.1.4.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Npgsql.3.1.4\lib\net451\Npgsql.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -51,10 +51,6 @@
     <Compile Include="BagOfWordsDB.cs" />
     <Compile Include="BagOfWords.cs" />
     <Compile Include="BagOfWordsV2.cs" />
-    <Compile Include="Database\DB.cs" />
-    <Compile Include="Database\Post.cs" />
-    <Compile Include="Database\LocalTerm.cs" />
-    <Compile Include="Database\GlobalTerm.cs" />
     <Compile Include="DupeClassifier.cs" />
     <Compile Include="DupeClassifierDB.cs" />
     <Compile Include="Extensions.cs" />

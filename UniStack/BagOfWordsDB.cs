@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Npgsql;
-using UniStack.Database;
 
 namespace UniStack
 {
@@ -24,16 +23,21 @@ namespace UniStack
         {
             conStrBuilder = connectionStringBuilder;
 
-            var db = new DB(conStrBuilder);
+            var sucess = CreateDB();
+
+            if (sucess)
+            {
+                CreateTables();
+            }
         }
 
 
 
         public bool ContainsPost(int postID)
         {
-            var db = new DB(conStrBuilder, true);
+            //var db = new DB(conStrBuilder, true);
 
-            return db.PostExists(postID);
+            return false;//db.PostExists(postID);
         }
 
         public void AddPost(int postID, string tags, IDictionary<int, short> termHashesByCount)
@@ -133,7 +137,8 @@ namespace UniStack
             sql.Append(";");
 
             sql.Append(@"CREATE TEMP TABLE tempposts AS
-                         SELECT posts.postid, posts.length, localterms.vector AS lterm, queryterms.vector AS qterm FROM posts
+                         SELECT posts.postid, posts.length, localterms.vector AS lterm, queryterms.vector AS qterm
+                         FROM posts
                          INNER JOIN localterms ON posts.postid = localterms.postid
                          INNER JOIN queryterms ON localterms.value = queryterms.value
                          WHERE localterms.value IN (");
@@ -147,7 +152,7 @@ namespace UniStack
             sql.Length -= 1;
             sql.Append(");");
 
-            sql.Append($@"SELECT postid, SUM(lterm * qterm) / (length * {queryLen}) AS sim
+            sql.Append($@"SELECT postid, sum(lterm * qterm) / (length * {queryLen}) AS sim
                           FROM tempposts
                           GROUP BY postid, length
                           ORDER BY sim DESC
@@ -177,34 +182,61 @@ namespace UniStack
 
         private Dictionary<int, float> GetQueryVectors(IDictionary<int, short> queryTermHashesByCount, out float queryLength)
         {
-            var db = new DB(conStrBuilder, true);
 
-            // Get the count of the most common term in the query.
-            var maxQueryTermCount = 0F;
-            foreach (var qt in queryTermHashesByCount)
+            var getQueryVectors = @"CREATE TEMP TABLE queryterms
+                                    (
+                                        value int4 PRIMARY KEY,
+                                        count int2,
+                                        idf   float4,
+                                        max   int2
+                                    );
+                                    INSERT INTO queryterms (value, count) VALUES <queryTerms>;
+
+                                    UPDATE queryterms
+                                    SET idf = globalterms.idf, max = (SELECT max(count) FROM queryterms)
+                                    FROM globalterms
+                                    WHERE queryterms.value = globalterms.value;
+
+                                    SELECT value, idf * (count * 1.0 / max) As vector
+                                    FROM queryterms;";
+
+            var queryTermsStr = new StringBuilder();
+
+            foreach (var term in queryTermHashesByCount)
             {
-                if (qt.Value > maxQueryTermCount)
-                {
-                    maxQueryTermCount = qt.Value;
-                }
+                queryTermsStr.Append("(");
+                queryTermsStr.Append(term.Key);
+                queryTermsStr.Append(",");
+                queryTermsStr.Append(term.Value);
+                queryTermsStr.Append("),");
             }
 
-            // Generate the query's TF-IDF values (vectors).
+            queryTermsStr.Length -= 1;
+
+            getQueryVectors = getQueryVectors.Replace("<queryTerms>", queryTermsStr.ToString());
+
             var queryVectors = new Dictionary<int, float>();
-            foreach (var qt in queryTermHashesByCount)
+            using (var con = new NpgsqlConnection(conStrBuilder))
+            using (var cmd = new NpgsqlCommand(getQueryVectors, con))
             {
-                if (db.GlobalTermExists(qt.Key))
+                con.Open();
+
+                var reader = cmd.ExecuteReader();
+
+                foreach (var entry in reader)
                 {
-                    var termIdf = db.GetGlobalTerm(qt.Key).Idf;
-                    queryVectors[qt.Key] = termIdf * (qt.Value / maxQueryTermCount);
+                    var value = (int)reader["value"];
+                    var vector = (double)reader["vector"];
+
+                    queryVectors[value] = (float)vector;
                 }
             }
 
             // Calculate the query's Euclidean length.
             var queryLen = 0F;
-            foreach (var tfIdf in queryVectors.Values)
+            foreach (var vector in queryVectors.Values)
             {
-                queryLen += tfIdf * tfIdf;
+                queryLen += vector * vector;
             }
             queryLength = (float)Math.Sqrt(queryLen);
 
@@ -270,6 +302,72 @@ namespace UniStack
                 {
                     cmd.ExecuteNonQuery();
                 }
+            }
+        }
+
+        private bool CreateDB()
+        {
+            var createDB = $@"
+                CREATE DATABASE ""{conStrBuilder.Database}""
+                WITH OWNER = ""{conStrBuilder.Username}""
+                ENCODING = 'UTF8'
+                CONNECTION LIMIT = -1;";
+
+            var dbName = conStrBuilder.Database;
+            conStrBuilder.Database = null;
+
+            using (var con = new NpgsqlConnection(conStrBuilder))
+            using (var cmd = new NpgsqlCommand(createDB, con))
+            {
+                con.Open();
+
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (PostgresException ex) when (ex.SqlState == "42P04")
+                {
+                    // The DB already exists, continue.
+
+                    return false;
+                }
+                finally
+                {
+                    conStrBuilder.Database = dbName;
+                }
+            }
+
+            return true;
+        }
+
+        private void CreateTables()
+        {
+            var createTables = $@"
+                CREATE TABLE IF NOT EXISTS globalterms
+                (
+                    value int4   PRIMARY KEY,
+                    idf   float4
+                );
+                CREATE TABLE IF NOT EXISTS posts
+                (
+                    postid int4         PRIMARY KEY,
+                    length float4,
+                    tags   varchar(128) NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS localterms
+                (
+                    id     bigserial PRIMARY KEY,
+                    postid int4      REFERENCES Posts(PostID),
+                    value  int4      REFERENCES GlobalTerms(Value),
+                    tf     int2,
+                    vector float4
+                );";
+
+            using (var con = new NpgsqlConnection(conStrBuilder))
+            using (var cmd = new NpgsqlCommand(createTables, con))
+            {
+                con.Open();
+                var res = cmd.ExecuteNonQuery();
             }
         }
     }
