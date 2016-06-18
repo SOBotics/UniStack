@@ -55,33 +55,74 @@ namespace UniStack
 
             minipulatedSinceLastRecalc = true;
 
-            //var db = new DB(conStrBuilder, true);
+            var addPost = $"INSERT INTO posts (postid, tags) VALUES ({post.ID}, @postTags);";
 
-            //db.AddPost(new Database.Post
-            //{
-            //    PostID = postID,
-            //    Tags = tags
-            //});
+            var addGlobalTerms = $@"CREATE TEMP TABLE gterms
+                                    (
+                                        value int4 PRIMARY KEY
+                                    );
+                                    INSERT INTO gterms VALUES <queryTermHashes>;
 
-            //foreach (var t in termHashesByCount)
-            //{
-            //    if (!db.GlobalTermExists(t.Key))
-            //    {
-            //        db.AddGlobalTerm(new GlobalTerm
-            //        {
-            //            Value = t.Key
-            //        });
-            //    }
+                                    INSERT INTO globalterms (value)
+                                    SELECT value FROM gterms
+                                    WHERE NOT EXISTS
+                                    (
+                                        SELECT value FROM globalterms
+                                        WHERE globalterms.value = gterms.value
+                                    );";
 
-            //    db.AddLocalTerm(new LocalTerm(conStrBuilder)
-            //    {
-            //        PostID = postID,
-            //        Value = t.Key,
-            //        TF = t.Value
-            //    });
-            //}
+            var gTermHashes = new StringBuilder();
 
-            throw new NotImplementedException();
+            foreach (var term in post.Terms)
+            {
+                gTermHashes.Append("(");
+                gTermHashes.Append(term.Key);
+                gTermHashes.Append("),");
+            }
+
+            gTermHashes.Length -= 1;
+
+            addGlobalTerms = addGlobalTerms.Replace("<queryTermHashes>", gTermHashes.ToString());
+
+            var addLocalTerms = "INSERT INTO localterms (postid, value, tf) VALUES <queryLocalTerms>;";
+
+            var lTermHashes = new StringBuilder();
+
+            foreach (var term in post.Terms)
+            {
+                lTermHashes.Append("(");
+                lTermHashes.Append(post.ID);
+                lTermHashes.Append(",");
+                lTermHashes.Append(term.Key);
+                lTermHashes.Append(",");
+                lTermHashes.Append(term.Value);
+                lTermHashes.Append("),");
+            }
+
+            lTermHashes.Length -= 1;
+
+            addLocalTerms = addLocalTerms.Replace("<queryLocalTerms>", lTermHashes.ToString());
+
+            using (var con = new NpgsqlConnection(conStrBuilder))
+            {
+                con.Open();
+
+                using (var cmd = new NpgsqlCommand(addPost, con))
+                {
+                    cmd.Parameters.AddWithValue("postTags", NpgsqlTypes.NpgsqlDbType.Varchar, post.Tags);
+                    cmd.ExecuteNonQuery();
+                }
+
+                using (var cmd = new NpgsqlCommand(addGlobalTerms, con))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                using (var cmd = new NpgsqlCommand(addLocalTerms, con))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
 
         public void RemovePost(int postID)
@@ -109,7 +150,7 @@ namespace UniStack
             throw new NotImplementedException();
         }
 
-        public Dictionary<int, float> GetSimilarity(IDictionary<int, short> queryTermHashesByCount, string postTopTag, uint maxPostsToReturn = uint.MaxValue, double minSimilarity = 0)
+        public Dictionary<int, float> GetSimilarity(IDictionary<int, short> queryTermHashesByCount, string postTopTag, uint maxPostsToReturn = uint.MaxValue)
         {
             if (minipulatedSinceLastRecalc)
             {
@@ -139,12 +180,13 @@ namespace UniStack
             sql.Length -= 1;
             sql.Append(";");
 
-            sql.Append(@"CREATE TEMP TABLE tempposts AS
+            sql.Append($@"CREATE TEMP TABLE tempposts AS
                          SELECT posts.postid, posts.length, localterms.vector AS lterm, queryterms.vector AS qterm
                          FROM posts
                          INNER JOIN localterms ON posts.postid = localterms.postid
                          INNER JOIN queryterms ON localterms.value = queryterms.value
-                         WHERE localterms.value IN (");
+                         WHERE tags LIKE @queryTag
+                         AND localterms.value IN (");
 
             foreach (var termHash in queryTermHashesByCount.Keys)
             {
@@ -166,6 +208,8 @@ namespace UniStack
             using (var cmd = new NpgsqlCommand(sql.ToString(), con))
             {
                 con.Open();
+
+                cmd.Parameters.AddWithValue("queryTag", postTopTag + "%");
 
                 var reader = cmd.ExecuteReader();
 
@@ -229,7 +273,7 @@ namespace UniStack
                 foreach (var entry in reader)
                 {
                     var value = (int)reader["value"];
-                    var vector = (double)reader["vector"];
+                    var vector = reader["vector"] as double? ?? 0;
 
                     queryVectors[value] = (float)vector;
                 }
@@ -250,14 +294,15 @@ namespace UniStack
         {
             var getPostCount = "SELECT count(*) FROM posts;";
 
-            var updateIdfs = @"UPDATE globalterms
-                               SET idf = 
-                               (
-                                   SELECT log(2, <postCount>.0 / count(*))
-                                   FROM localterms
-                                   WHERE localterms.value = globalterms.value
-                                   GROUP BY value
-                               );";
+            var updateIdfs = @"CREATE TEMP TABLE idfs AS
+                               SELECT value, log(2, <post count>.0 / count(*)) AS idf
+                               FROM localterms
+                               GROUP BY value;
+
+                               UPDATE globalterms
+                               SET idf = idfs.idf
+                               FROM idfs
+                               WHERE globalterms.value = idfs.value;";
 
             var updateVectors = $@"CREATE TEMP TABLE tempterms AS
                                    SELECT localterms.value, postid, tf * idf AS vector
@@ -349,12 +394,12 @@ namespace UniStack
                 CREATE TABLE IF NOT EXISTS globalterms
                 (
                     value int4   PRIMARY KEY,
-                    idf   float4
+                    idf   float4 DEFAULT 0
                 );
                 CREATE TABLE IF NOT EXISTS posts
                 (
                     postid int4         PRIMARY KEY,
-                    length float4,
+                    length float4       DEFAULT 0,
                     tags   varchar(128) NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS localterms
@@ -362,8 +407,8 @@ namespace UniStack
                     id     bigserial PRIMARY KEY,
                     postid int4      REFERENCES Posts(PostID),
                     value  int4      REFERENCES GlobalTerms(Value),
-                    tf     int2,
-                    vector float4
+                    tf     int2      DEFAULT 0,
+                    vector float4    DEFAULT 0
                 );";
 
             using (var con = new NpgsqlConnection(conStrBuilder))

@@ -50,8 +50,8 @@ namespace UniStack
 
                     while (tagIndex > 0)
                     {
-                        tags += lCpy.Substring(tagIndex, 6);
-                        lCpy = lCpy.Remove(tagIndex, 6);
+                        tags += lCpy.Substring(tagIndex, 5) + " ";
+                        lCpy = lCpy.Remove(tagIndex, 5);
 
                         tagIndex = lCpy.IndexOf("•");
                     }

@@ -30,7 +30,7 @@ namespace UniStack
         // 10x faster to identify a word to be ignore.
         private static List<string[]> exceptions = new List<string[]>
         {
-            null, null, null, null,
+            null, null, null, null, null,
             new[]
             {
                 "abatjour",
