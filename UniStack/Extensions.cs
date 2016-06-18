@@ -9,7 +9,7 @@ namespace UniStack
         private static string[] wordDelimeters = new[]
         {
             // Parenthesis.
-            ". (", " (", "(\"", "('", ") ", ").", "),", ")?", ")!", "\")", "')", "):", ");",
+            //". (", " (", "(\"", "('", ") ", ").", "),", ")?", ")!", "\")", "')", "):", ");",
 
             // Square brackets.
             " [", "[\"", "['", "] ", "].", "],", "]?", "]!", "\"]", "']", "]:", "];",
@@ -24,7 +24,7 @@ namespace UniStack
             " '", "' ", "'.", "',", "'?", "'!", "':", "';",
 
             // Misc.
-            ". ", ": ", "; ", "- ", "=", "?", "!", "\\", "/", ",", " ", "\r", "\n", "\t"
+            ". ", ": ", "; ", "- ", "=", "?", "!", "\\", "/", ",", ")", "(", " ", "\r", "\n", "\t"
         };
         private static readonly char[] strEndPunc = new[]
         {
@@ -74,6 +74,7 @@ namespace UniStack
 
                 w = TrimStart(w);
                 w = TrimEnd(w);
+                w = Americanise.Apply(w);
 
                 var hash = w.GetStringHashCode();
 
@@ -92,22 +93,32 @@ namespace UniStack
 
         public static double GetPunctuationRatio(this string str)
         {
-            var punctCharCount = 0D;
-            var wordCharCount = 0;
+            var punctCount = 0D;
 
             foreach (var c in str)
             {
                 if (char.IsPunctuation(c))
                 {
-                    punctCharCount++;
-                }
-                else if (char.IsLetterOrDigit(c))
-                {
-                    wordCharCount++;
+                    punctCount++;
                 }
             }
 
-            return punctCharCount / wordCharCount;
+            return punctCount / str.Length;
+        }
+
+        public static double GetWhiteSpaceRatio(this string str)
+        {
+            var whiteSpaceCount = 0D;
+
+            foreach (var c in str)
+            {
+                if (char.IsWhiteSpace(c))
+                {
+                    whiteSpaceCount++;
+                }
+            }
+
+            return whiteSpaceCount / str.Length;
         }
 
         public static string ExpandContractions(this string str)
