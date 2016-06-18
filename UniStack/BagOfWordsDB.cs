@@ -181,12 +181,12 @@ namespace UniStack
             sql.Append(";");
 
             sql.Append($@"CREATE TEMP TABLE tempposts AS
-                         SELECT posts.postid, posts.length, localterms.vector AS lterm, queryterms.vector AS qterm
-                         FROM posts
-                         INNER JOIN localterms ON posts.postid = localterms.postid
-                         INNER JOIN queryterms ON localterms.value = queryterms.value
-                         WHERE tags LIKE @queryTag
-                         AND localterms.value IN (");
+                          SELECT posts.postid, posts.length, localterms.vector AS lterm, queryterms.vector AS qterm
+                          FROM posts
+                          INNER JOIN localterms ON posts.postid = localterms.postid
+                          INNER JOIN queryterms ON localterms.value = queryterms.value
+                          WHERE tags LIKE @queryTag
+                          AND localterms.value IN (");
 
             foreach (var termHash in queryTermHashesByCount.Keys)
             {
@@ -295,7 +295,7 @@ namespace UniStack
             var getPostCount = "SELECT count(*) FROM posts;";
 
             var updateIdfs = @"CREATE TEMP TABLE idfs AS
-                               SELECT value, log(2, <post count>.0 / count(*)) AS idf
+                               SELECT value, log(2, <postCount>.0 / count(*)) AS idf
                                FROM localterms
                                GROUP BY value;
 
@@ -315,13 +315,14 @@ namespace UniStack
                                    WHERE localterms.value = tempterms.value 
                                    AND localterms.postid = tempterms.postid;";
 
-            var updateLength = @"UPDATE posts
-                                 SET length =
+            // Special thanks to Tunaki, http://stackoverflow.com/users/1743880.
+            var updateLength = @"WITH new_length(postid, length) AS
                                  (
-                                     SELECT |/ sum(vector * vector)
-                                     FROM localterms
-                                     WHERE localterms.postid = posts.postid
-                                 );";
+                                     SELECT postid, |/ sum(vector * vector) FROM localterms GROUP BY postid
+                                 )
+                                 UPDATE posts SET length = nl.length
+                                 FROM new_length nl
+                                 WHERE posts.postid = nl.postid;";
 
             using (var con = new NpgsqlConnection(conStrBuilder))
             {
