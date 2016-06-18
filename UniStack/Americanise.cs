@@ -14,6 +14,7 @@ namespace UniStack
         private const RegexOptions regOpts = RegexOptions.Compiled | RegexOptions.CultureInvariant;
         private static Regex[] patterns = new[]
         {
+            new Regex("ise(d|s)?$", regOpts),
             new Regex("aemia$", regOpts),
             new Regex("haem(at)?o", regOpts),
             new Regex("([lL])eukaem", regOpts),
@@ -22,7 +23,7 @@ namespace UniStack
         };
         private static string[] replacements = new[]
         {
-            "hem$1o", "emia", "$1eukem", "program$1", "$1or$2"
+            "ize$1", "hem$1o", "emia", "$1eukem", "program$1", "$1or$2"
         };
         // Using a collection of words (rather than a regex,
         // as used in the original implementation) is approximately
@@ -75,8 +76,6 @@ namespace UniStack
             ["cancelled"] = "canceled",
             ["cancelling"] = "canceling",
             ["candour"] = "candor",
-            ["capitalise"] = "capitalize",
-            ["capitalised"] = "capitalized",
             ["capitalisation"] = "capitalization",
             ["centre"] = "center",
             ["chimaeric"] = "chimeric",
@@ -138,19 +137,11 @@ namespace UniStack
             ["labouring"] = "laboring",
             ["leant"] = "leaned",
             ["learnt"] = "learned",
-            ["localise"] = "localize",
-            ["localised"] = "localized",
             ["manoeuvre"] = "maneuver",
             ["manoeuvres"] = "maneuvers",
-            ["maximise"] = "maximize",
-            ["maximised"] = "maximized",
             ["maximising"] = "maximizing",
             ["meagre"] = "meager",
-            ["minimise"] = "minimize",
-            ["minimised"] = "minimized",
             ["minimising"] = "minimizing",
-            ["modernise"] = "modernize",
-            ["modernised"] = "modernized",
             ["modernising"] = "modernizing",
             ["misdemeanour"] = "misdemeanor",
             ["misdemeanours"] = "misdemeanors",
@@ -162,26 +153,12 @@ namespace UniStack
             ["oestrogens"] = "estrogens",
             ["organisation"] = "organization",
             ["organisations"] = "organizations",
-            ["penalise"] = "penalize",
-            ["penalised"] = "penalized",
-            ["popularise"] = "popularize",
-            ["popularised"] = "popularized",
-            ["popularises"] = "popularizes",
             ["popularising"] = "popularizing",
             ["practise"] = "practice",
             ["practised"] = "practiced",
-            ["pressurise"] = "pressurize",
-            ["pressurised"] = "pressurized",
-            ["pressurises"] = "pressurizes",
             ["pressurising"] = "pressurizing",
-            ["realise"] = "realize",
-            ["realised"] = "realized",
             ["realising"] = "realizing",
-            ["realises"] = "realizes",
-            ["recognise"] = "recognize",
-            ["recognised"] = "recognized",
             ["recognising"] = "recognizing",
-            ["recognises"] = "recognizes",
             ["rumoured"] = "rumored",
             ["rumouring"] = "rumoring",
             ["savour"] = "savor",
@@ -190,9 +167,6 @@ namespace UniStack
             ["savouring"] = "savoring",
             ["splendour"] = "splendor",
             ["splendours"] = "splendors",
-            ["tokenise"] = "tokenize",
-            ["tokenises"] = "tokenizes",
-            ["tokenised"] = "tokenized",
             ["tokenising"] = "tokenizing",
             ["theatre"] = "theater",
             ["theatres"] = "theaters",
