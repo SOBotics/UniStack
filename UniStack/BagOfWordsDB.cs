@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Npgsql;
 
@@ -35,22 +34,26 @@ namespace UniStack
 
         public bool ContainsPost(int postID)
         {
-            //var db = new DB(conStrBuilder, true);
+            var checkPosts = $"SELECT EXISTS (SELECT 1 from posts WHERE postid = {postID});";
 
-            return false;//db.PostExists(postID);
+            using (var con = new NpgsqlConnection(conStrBuilder))
+            using (var cmd = new NpgsqlCommand(checkPosts, con))
+            {
+                con.Open();
+                return cmd.ExecuteScalar() as bool? ?? false;
+            }
         }
 
-        public void AddPost(int postID, string tags, IDictionary<int, short> termHashesByCount)
+        public void AddPost(PostDB post)
         {
-            //TODO: Upgrade this to something "better". Not sure what yet...
+            if (post == null) throw new ArgumentNullException(nameof(post));
+            if (post.Terms == null) throw new ArgumentNullException(nameof(post.Terms));
+            if (ContainsPost(post.ID))
+            {
+                throw new ArgumentException("A post with this ID already exists.", nameof(post));
+            }
 
-            //if (termHashesByCount == null) throw new ArgumentNullException(nameof(termHashesByCount));
-            //if (ContainsPost(postID))
-            //{
-            //    throw new ArgumentException("A post with this ID already exists.", nameof(postID));
-            //}
-
-            //minipulatedSinceLastRecalc = true;
+            minipulatedSinceLastRecalc = true;
 
             //var db = new DB(conStrBuilder, true);
 

@@ -13,6 +13,7 @@ namespace UniStack
         private static readonly Regex link = new Regex("(?is)<a.*?>.*?</a>", regOpts);
         private static readonly Regex htmlTags = new Regex("(?is)<.*?>", regOpts);
         private static readonly Regex nonEng = new Regex(@"[^\x00-\x7F]+", regOpts);
+        private static readonly Regex multiWhiteSpace = new Regex(@"\s+", regOpts);
 
 
 
@@ -32,14 +33,35 @@ namespace UniStack
             // Remove any remaining HTML tags.
             tkn = htmlTags.Replace(tkn, " ");
 
-            // Since we're not removing quotes now, let's try to remove any potential code.
-            // (Returning code drastically reduces search accuracy.)
+            // Now let's try to remove any potentially unformatted code.
+            // (Not doing this drastically reduces search accuracy.)
             var lines = tkn.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             var tknCln = "";
             foreach (var l in lines)
             {
-                if (l.GetPunctuationRatio() >= 0.1 && !l.StartsWith("• ") && !l.EndsWith("• ")) continue;
-                tknCln += l + "\n";
+                var lCpy = multiWhiteSpace.Replace(l, " ").Trim();
+                var p = lCpy.GetPunctuationRatio();
+                var w = lCpy.GetWhiteSpaceRatio();
+
+                if ((p >= 0.175 || w <= 0.08) && lCpy.Length > 10)
+                {
+                    var tags = "";
+                    var tagIndex = lCpy.IndexOf("•");
+
+                    while (tagIndex > 0)
+                    {
+                        tags += lCpy.Substring(tagIndex, 6);
+                        lCpy = lCpy.Remove(tagIndex, 6);
+
+                        tagIndex = lCpy.IndexOf("•");
+                    }
+
+                    tknCln += tags + "\n";
+                }
+                else
+                {
+                    tknCln += l + "\n";
+                }
             }
 
             return tknCln;
@@ -147,7 +169,7 @@ namespace UniStack
             while (m.Success)
             {
                 tagged = tagged.Remove(m.Index, m.Length);
-                tagged = tagged.Insert(m.Index, " •L• ");
+                tagged = tagged.Insert(m.Index, " •LLL• ");
 
                 m = link.Match(tagged);
             }
@@ -163,7 +185,7 @@ namespace UniStack
             while (m.Success)
             {
                 tagged = tagged.Remove(m.Index, m.Length);
-                tagged = tagged.Insert(m.Index, " •P• ");
+                tagged = tagged.Insert(m.Index, " •PPP• ");
 
                 m = pic.Match(tagged);
             }
