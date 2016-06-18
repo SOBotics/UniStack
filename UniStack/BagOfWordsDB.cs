@@ -304,16 +304,16 @@ namespace UniStack
                                FROM idfs
                                WHERE globalterms.value = idfs.value;";
 
-            var updateVectors = $@"CREATE TEMP TABLE tempterms AS
-                                   SELECT localterms.value, postid, tf * idf AS vector
-                                   FROM localterms
-                                   INNER JOIN globalterms on localterms.value = globalterms.value;
-
-                                   UPDATE localterms
-                                   SET vector = tempterms.vector
-                                   FROM tempterms
-                                   WHERE localterms.value = tempterms.value 
-                                   AND localterms.postid = tempterms.postid;";
+            var updateVectors = $@"WITH new_vector(postid, value, vector) AS
+                                   (
+                                       SELECT postid, localterms.value, tf * idf
+                                       FROM localterms 
+                                       INNER JOIN globalterms ON globalterms.value = localterms.value
+                                   )
+                                   UPDATE localterms SET vector = nv.vector
+                                   FROM new_vector nv
+                                   WHERE localterms.value = nv.value
+                                   AND localterms.postid = nv.postid;";
 
             // Special thanks to Tunaki, http://stackoverflow.com/users/1743880.
             var updateLength = @"WITH new_length(postid, length) AS
