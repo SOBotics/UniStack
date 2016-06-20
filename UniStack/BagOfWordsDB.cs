@@ -34,13 +34,14 @@ namespace UniStack
 
         public bool ContainsPost(int postID)
         {
-            var checkPosts = $"SELECT EXISTS (SELECT 1 from posts WHERE postid = {postID});";
+            var checkPosts = $"SELECT 1 FROM posts WHERE postid = {postID};";
 
             using (var con = new NpgsqlConnection(conStrBuilder))
             using (var cmd = new NpgsqlCommand(checkPosts, con))
             {
                 con.Open();
-                return cmd.ExecuteScalar() as bool? ?? false;
+
+                return cmd.ExecuteScalar() != null;
             }
         }
 
@@ -57,19 +58,8 @@ namespace UniStack
 
             var addPost = $"INSERT INTO posts (postid, tags) VALUES ({post.ID}, @postTags);";
 
-            var addGlobalTerms = $@"CREATE TEMP TABLE gterms
-                                    (
-                                        value int4 PRIMARY KEY
-                                    );
-                                    INSERT INTO gterms VALUES <queryTermHashes>;
-
-                                    INSERT INTO globalterms (value)
-                                    SELECT value FROM gterms
-                                    WHERE NOT EXISTS
-                                    (
-                                        SELECT value FROM globalterms
-                                        WHERE globalterms.value = gterms.value
-                                    );";
+            var addGlobalTerms = $@"INSERT INTO globalterms (value) VALUES <queryTermHashes>
+                                    ON CONFLICT ON CONSTRAINT globalterms_pkey DO NOTHING;";
 
             var gTermHashes = new StringBuilder();
 
@@ -304,21 +294,17 @@ namespace UniStack
                                FROM idfs
                                WHERE globalterms.value = idfs.value;";
 
-            var updateVectors = $@"WITH new_vector(postid, value, vector) AS
-                                   (
-                                       SELECT postid, localterms.value, tf * idf
-                                       FROM localterms 
-                                       INNER JOIN globalterms ON globalterms.value = localterms.value
-                                   )
-                                   UPDATE localterms SET vector = nv.vector
-                                   FROM new_vector nv
-                                   WHERE localterms.value = nv.value
-                                   AND localterms.postid = nv.postid;";
-
             // Special thanks to Tunaki, http://stackoverflow.com/users/1743880.
+            var updateVectors = @"UPDATE localterms SET vector = tf * idf
+                                  FROM globalterms 
+                                  WHERE globalterms.value = localterms.value;";
+
+            // Also hand-crafted by Tuna.
             var updateLength = @"WITH new_length(postid, length) AS
                                  (
-                                     SELECT postid, |/ sum(vector * vector) FROM localterms GROUP BY postid
+                                     SELECT postid, |/ sum(vector * vector)
+                                     FROM localterms
+                                     GROUP BY postid
                                  )
                                  UPDATE posts SET length = nl.length
                                  FROM new_length nl
