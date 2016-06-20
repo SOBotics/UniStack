@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using Npgsql;
 
+// Special thanks to Tunaki (http://stackoverflow.com/users/1743880)
+// for optimising most of these queries.
+
 namespace UniStack
 {
     /// <summary>
@@ -284,22 +287,21 @@ namespace UniStack
         {
             var getPostCount = "SELECT count(*) FROM posts;";
 
-            var updateIdfs = @"CREATE TEMP TABLE idfs AS
-                               SELECT value, log(2, <postCount>.0 / count(*)) AS idf
-                               FROM localterms
-                               GROUP BY value;
-
+            var updateIdfs = @"WITH idfs AS
+                               (
+                                   SELECT value, log(2, 1000.0 / count(*)) AS idf
+                                   FROM localterms
+                                   GROUP BY value
+                               )
                                UPDATE globalterms
                                SET idf = idfs.idf
                                FROM idfs
                                WHERE globalterms.value = idfs.value;";
 
-            // Special thanks to Tunaki, http://stackoverflow.com/users/1743880.
             var updateVectors = @"UPDATE localterms SET vector = tf * idf
                                   FROM globalterms 
                                   WHERE globalterms.value = localterms.value;";
 
-            // Also hand-crafted by Tuna.
             var updateLength = @"WITH new_length(postid, length) AS
                                  (
                                      SELECT postid, |/ sum(vector * vector)
