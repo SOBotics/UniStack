@@ -33,8 +33,6 @@ namespace UniStack
             }
         }
 
-
-
         public bool ContainsPost(int postID)
         {
             var checkPosts = $"SELECT 1 FROM posts WHERE postid = {postID};";
@@ -222,23 +220,23 @@ namespace UniStack
 
         private Dictionary<int, float> GetQueryVectors(IDictionary<int, short> queryTermHashesByCount, out float queryLength)
         {
+            var getQueryVectors =
+                @"CREATE TEMP TABLE queryterms
+                  (
+                      value int4 PRIMARY KEY,
+                      count int2,
+                      idf   float4,
+                      max   int2
+                  );
+                  INSERT INTO queryterms (value, count) VALUES <queryTerms>;
 
-            var getQueryVectors = @"CREATE TEMP TABLE queryterms
-                                    (
-                                        value int4 PRIMARY KEY,
-                                        count int2,
-                                        idf   float4,
-                                        max   int2
-                                    );
-                                    INSERT INTO queryterms (value, count) VALUES <queryTerms>;
+                  UPDATE queryterms
+                  SET idf = globalterms.idf, max = (SELECT max(count) FROM queryterms)
+                  FROM globalterms
+                  WHERE queryterms.value = globalterms.value;
 
-                                    UPDATE queryterms
-                                    SET idf = globalterms.idf, max = (SELECT max(count) FROM queryterms)
-                                    FROM globalterms
-                                    WHERE queryterms.value = globalterms.value;
-
-                                    SELECT value, idf * (count * 1.0 / max) As vector
-                                    FROM queryterms;";
+                  SELECT value, idf * (count * 1.0 / max) As vector
+                  FROM queryterms;";
 
             var queryTermsStr = new StringBuilder();
 
@@ -287,30 +285,33 @@ namespace UniStack
         {
             var getPostCount = "SELECT count(*) FROM posts;";
 
-            var updateIdfs = @"WITH idfs AS
-                               (
-                                   SELECT value, log(2, 1000.0 / count(*)) AS idf
-                                   FROM localterms
-                                   GROUP BY value
-                               )
-                               UPDATE globalterms
-                               SET idf = idfs.idf
-                               FROM idfs
-                               WHERE globalterms.value = idfs.value;";
+            var updateIdfs =
+                @"WITH idfs AS
+                  (
+                      SELECT value, log(2, 1000.0 / count(*)) AS idf
+                      FROM localterms
+                      GROUP BY value
+                  )
+                  UPDATE globalterms
+                  SET idf = idfs.idf
+                  FROM idfs
+                  WHERE globalterms.value = idfs.value;";
 
-            var updateVectors = @"UPDATE localterms SET vector = tf * idf
-                                  FROM globalterms 
-                                  WHERE globalterms.value = localterms.value;";
+            var updateVectors =
+                @"UPDATE localterms SET vector = tf * idf
+                 FROM globalterms 
+                 WHERE globalterms.value = localterms.value;";
 
-            var updateLength = @"WITH new_length(postid, length) AS
-                                 (
-                                     SELECT postid, |/ sum(vector * vector)
-                                     FROM localterms
-                                     GROUP BY postid
-                                 )
-                                 UPDATE posts SET length = nl.length
-                                 FROM new_length nl
-                                 WHERE posts.postid = nl.postid;";
+            var updateLength =
+                @"WITH new_length(postid, length) AS
+                 (
+                     SELECT postid, |/ sum(vector * vector)
+                     FROM localterms
+                     GROUP BY postid
+                 )
+                 UPDATE posts SET length = nl.length
+                 FROM new_length nl
+                 WHERE posts.postid = nl.postid;";
 
             using (var con = new NpgsqlConnection(conStrBuilder))
             {
