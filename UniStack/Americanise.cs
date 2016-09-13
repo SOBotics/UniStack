@@ -27,7 +27,7 @@ namespace UniStack
         };
         // Using a collection of words (rather than a regex,
         // as used in the original implementation) is approximately
-        // 10x faster to identify a word to be ignore.
+        // 10x faster to identify a word to be ignored.
         private static List<string[]> exceptions = new List<string[]>
         {
             null, null, null, null, null,
