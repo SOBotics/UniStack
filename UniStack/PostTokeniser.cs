@@ -40,7 +40,7 @@ namespace UniStack
             tokenised = body.ToLowerInvariant();
 
             // Process the various post segments.
-            //tkn = TagBlockQuotes(tkn); // It seems that tagging these blocks removes quite valuable entropy.
+            //tkn = TagBlockQuotes(tkn); // It seems that tokenising these blocks removes a fair amount of entropy.
             tokenised = TokeniseCodeBlocks(tokenised);
             tokenised = TokeniseInlineCode(tokenised);
             tokenised = TokenisePictures(tokenised);
@@ -64,7 +64,7 @@ namespace UniStack
                     var tokens = "";
                     var tagIndex = lCpy.IndexOf(tknDelimiter);
 
-                    while (tagIndex > 0)
+                    while (tagIndex > 0 && tagIndex + 4 <= lCpy.Length - 1 && lCpy[tagIndex + 4] == tknDelimiter[0])
                     {
                         tokens += lCpy.Substring(tagIndex, 5) + " ";
                         lCpy = lCpy.Remove(tagIndex, 5);
