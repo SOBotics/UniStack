@@ -1,5 +1,3 @@
 # UniStack
 
-## Current algorithm (v1.4)
-
-*Currently under construction...*
+An experimental duplicate question search algorithm for Stack Exchange.
