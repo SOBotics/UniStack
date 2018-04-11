@@ -1,0 +1,3 @@
+[submodule "StackExchange"]
+	path = StackExchange
+	url = https://github.com/SOBotics/StackExchange
