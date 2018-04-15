@@ -14,16 +14,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenNLP" Version="1.3.4" />
     <PackageReference Include="System.Data.HashFunction.xxHash" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NFastTag\NFastTag.csproj" />
     <ProjectReference Include="..\StackExchange\StackExchange\StackExchange.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="EnglishPOS.nbin">
+    <None Update="Lexicon.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
