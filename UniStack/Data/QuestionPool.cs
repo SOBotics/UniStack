@@ -23,16 +23,16 @@ namespace UniStack.Data
 	public unsafe struct QuestionPool
 	{
 		private byte* data;
-		private long dataBufferSize;
 		private long position;
 		private int bufferResizeMultiplier;
 
+		public long DataBufferSize;
 		public long CurrentSizeBytes;
 
 		public QuestionPool(int bufferResizeMultiplier)
 		{
 			data = default(byte*);
-			dataBufferSize = 0;
+			DataBufferSize = 0;
 			position = 0;
 			this.bufferResizeMultiplier = bufferResizeMultiplier;
 			CurrentSizeBytes = 0;
@@ -43,11 +43,11 @@ namespace UniStack.Data
 			// id + tagCount + tags + termCount + terms
 			var bytes = 4 + 1 + (tags.Length * 4) + 2 + (terms.Count * 5);
 
-			if (CurrentSizeBytes + bytes > dataBufferSize)
+			if (CurrentSizeBytes + bytes > DataBufferSize)
 			{
 				var expandBy = bytes * Math.Max(bufferResizeMultiplier, 1);
 
-				dataBufferSize = CurrentSizeBytes + expandBy;
+				DataBufferSize = CurrentSizeBytes + expandBy;
 
 				if (data == default(byte*))
 				{
@@ -55,7 +55,7 @@ namespace UniStack.Data
 				}
 				else
 				{
-					data = (byte*)Marshal.ReAllocHGlobal((IntPtr)data, (IntPtr)dataBufferSize);
+					data = (byte*)Marshal.ReAllocHGlobal((IntPtr)data, (IntPtr)DataBufferSize);
 				}
 			}
 
