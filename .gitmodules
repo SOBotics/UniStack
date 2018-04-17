@@ -1,6 +1,3 @@
 [submodule "StackExchange"]
 	path = StackExchange
 	url = https://github.com/SOBotics/StackExchange
-[submodule "NFastTag"]
-	path = NFastTag
-	url = https://github.com/mnikolovski/NFastTag
