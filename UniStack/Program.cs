@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Web;
-using NFastTag.PosTag;
+using NFastTag;
 using StackExchange.Auth;
 using StackExchange.Chat.Actions;
 using StackExchange.Chat.Events;
@@ -22,12 +22,6 @@ namespace UniStack
 
 		public static void Main(string[] args)
 		{
-			var model = File.ReadAllText("Lexicon.txt");
-			var tagger = new FastTag(model);
-			var tagged = tagger.Tag("This is a test sentence 16372");
-
-
-
 			JoinRoom();
 
 			if (ModelFileAccessor.DataMissing)
