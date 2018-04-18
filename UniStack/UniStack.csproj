@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NFastTag\NFastTag.csproj" />
+    <ProjectReference Include="..\NFastTag\NFastTag\NFastTag.csproj" />
     <ProjectReference Include="..\StackExchange\StackExchange\StackExchange.csproj" />
   </ItemGroup>
 

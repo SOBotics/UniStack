@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UniStack", "UniStack\UniSta
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StackExchange", "StackExchange\StackExchange\StackExchange.csproj", "{0F66AFAA-600A-4448-83D9-937224AD0DDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NFastTag", "NFastTag\NFastTag.csproj", "{B62C4ED9-9CCC-466C-B3B9-5067A8F2D7A1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NFastTag", "NFastTag\NFastTag\NFastTag.csproj", "{B8F5AD6F-112E-4096-B80F-A5CCD7085200}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{0F66AFAA-600A-4448-83D9-937224AD0DDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0F66AFAA-600A-4448-83D9-937224AD0DDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0F66AFAA-600A-4448-83D9-937224AD0DDE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B62C4ED9-9CCC-466C-B3B9-5067A8F2D7A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B62C4ED9-9CCC-466C-B3B9-5067A8F2D7A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B62C4ED9-9CCC-466C-B3B9-5067A8F2D7A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B62C4ED9-9CCC-466C-B3B9-5067A8F2D7A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8F5AD6F-112E-4096-B80F-A5CCD7085200}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8F5AD6F-112E-4096-B80F-A5CCD7085200}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8F5AD6F-112E-4096-B80F-A5CCD7085200}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8F5AD6F-112E-4096-B80F-A5CCD7085200}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
