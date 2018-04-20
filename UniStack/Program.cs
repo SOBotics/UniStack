@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Runtime.InteropServices;
 using System.Threading;
-using System.Web;
-using NFastTag;
+using System.Threading.Tasks;
 using StackExchange.Auth;
 using StackExchange.Chat.Actions;
 using StackExchange.Chat.Events;
@@ -24,7 +21,7 @@ namespace UniStack
 		{
 			JoinRoom();
 
-			if (ModelFileAccessor.DataMissing)
+			if (ModelFileAccessor.AvailableModels.Length == 0)
 			{
 				InitialiseFromDataDump();
 			}
@@ -73,47 +70,82 @@ namespace UniStack
 
 		private static void InitialiseFromDataDump()
 		{
-			Console.Write("\nModels file missing, initialising from data dump...");
-			chatWriter.CreateMessage("Models file missing, initialising from data dump (this could take a while)...");
+			var startTxt = "Model files missing, initialising from data dump (this could take a while)...";
+			Console.Write($"\n{startTxt}");
+			chatWriter.CreateMessage(startTxt);
 
 			var dumpPath = ConfigAccessor.GetValue<string>("DataDumpPath");
 			var parser = new DataDumpParser();
+			var tags = ConfigAccessor.GetValues<string>("Tags");
+
+			foreach (var tag in tags)
+			{
+				Console.Write($"\nAdding {tag}...");
+				chatWriter.CreateMessage($"Adding [tag:{tag}]...");
+
+				Task.Run(() =>
+				{
+					Thread.Sleep(60 * 1000);
+
+					while (parser.CurrentQuestionsParsed > 0)
+					{
+						var c = parser.CurrentQuestionsParsed.ToString("N0");
+
+						chatWriter.CreateMessage($"Models: {c}");
+
+						Thread.Sleep(60 * 1000);
+					}
+				});
+
+				var sw = Stopwatch.StartNew();
+
+				//TODO: do something with the returned question pool
+				var qPool = parser.ParseTag(tag);
+
+				sw.Stop();
+
+				var qCount = /*qPool.Count*/parser.CurrentQuestionsParsed.ToString("N0");
+				var time = sw.Elapsed.ToString("mm\\:ss");
+
+				Console.Write($"done. {qCount} in {time}.");
+				chatWriter.CreateMessage($"[tag:{tag}] added. {qCount} questions were parsed in {time}.");
+			}
 		}
 
 		private static void LoadModels()
 		{
 			// 17mil Qs (25 terms + 3 tags) = 2.4GM ram
 
-			var qCount = 2133617;
-			var startTxt = $"\nLoading {qCount.ToString("N0")} questions into memory...";
+			//var qCount = 2133617;
+			//var startTxt = $"\nLoading {qCount.ToString("N0")} questions into memory...";
 
-			Console.Write(startTxt);
-			chatWriter.CreateMessage(startTxt);
+			//Console.Write(startTxt);
+			//chatWriter.CreateMessage(startTxt);
 
-			var qp = new QuestionPool(qCount);
-			var sw = Stopwatch.StartNew();
+			//var qp = new QuestionPool(qCount);
+			//var sw = Stopwatch.StartNew();
 
-			for (var i = 0; i < qCount; i++)
-			{
-				var t = new Dictionary<int, byte>();
-				var tCount = 50;// (DateTime.UtcNow.Ticks % 20) + 6;
+			//for (var i = 0; i < qCount; i++)
+			//{
+			//	var t = new Dictionary<int, byte>();
+			//	var tCount = 50;// (DateTime.UtcNow.Ticks % 20) + 6;
 
-				for (var j = 0; j < tCount; j++)
-				{
-					t[j] = (byte)j;
-				}
+			//	for (var j = 0; j < tCount; j++)
+			//	{
+			//		t[j] = (byte)j;
+			//	}
 
-				qp.Add(i, new[] { 1337, int.MaxValue, int.MinValue }, t);
-			}
+			//	qp.Add(i, new[] { 1337, int.MaxValue, int.MinValue }, t);
+			//}
 
-			sw.Stop();
+			//sw.Stop();
 
-			var cMb = Math.Round(qp.CurrentSizeBytes / 1024.0 / 1024, 2).ToString("N0");
-			var avg = Math.Round(qp.CurrentSizeBytes * 1.0 / qCount).ToString("N0");
-			var finishTxt = $"\nLoad completed in {sw.ElapsedMilliseconds.ToString("N0")}ms, consuming {cMb}MiB ({avg} bytes/question).";
+			//var cMb = Math.Round(qp.Size / 1024.0 / 1024, 2).ToString("N0");
+			//var avg = Math.Round(qp.Size * 1.0 / qCount).ToString("N0");
+			//var finishTxt = $"\nLoad completed in {sw.ElapsedMilliseconds.ToString("N0")}ms, consuming {cMb}MiB ({avg} bytes/question).";
 
-			Console.WriteLine(finishTxt);
-			chatWriter.CreateMessage(finishTxt);
+			//Console.WriteLine(finishTxt);
+			//chatWriter.CreateMessage(finishTxt);
 		}
 	}
 }
