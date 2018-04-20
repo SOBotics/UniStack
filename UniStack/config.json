@@ -1,0 +1,10 @@
+﻿{
+	"Host": "stackoverflow.com",
+	"RoomUrl": "https://chat.stackoverflow.com/rooms/167908/sobotics-workshop",
+	"Email": "",
+	"Password": "",
+	"DataDumpPath": "",
+	"Tags": [
+		"c#", "python"
+	]
+}
