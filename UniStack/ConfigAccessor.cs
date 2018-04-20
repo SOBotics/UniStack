@@ -22,6 +22,18 @@ namespace UniStack
 			return token.Value<T>();
 		}
 
+		public static IEnumerable<T> GetValues<T>(string path)
+		{
+			var token = GetToken(path);
+
+			if (token == null)
+			{
+				return default(IEnumerable<T>);
+			}
+
+			return token.Values<T>();
+		}
+
 
 
 		private static JToken GetToken(string path)

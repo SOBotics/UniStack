@@ -26,16 +26,19 @@ namespace UniStack.Data
 		private long position;
 		private int bufferResizeMultiplier;
 
-		public long DataBufferSize;
-		public long CurrentSizeBytes;
+		public int Count;
+		public long RealSize;
+		public long Size;
 
 		public QuestionPool(int bufferResizeMultiplier)
 		{
 			data = default(byte*);
-			DataBufferSize = 0;
 			position = 0;
 			this.bufferResizeMultiplier = bufferResizeMultiplier;
-			CurrentSizeBytes = 0;
+
+			Count = 0;
+			RealSize = 0;
+			Size = 0;
 		}
 
 		public void Add(int id, int[] tags, Dictionary<int, byte> terms)
@@ -43,11 +46,11 @@ namespace UniStack.Data
 			// id + tagCount + tags + termCount + terms
 			var bytes = 4 + 1 + (tags.Length * 4) + 2 + (terms.Count * 5);
 
-			if (CurrentSizeBytes + bytes > DataBufferSize)
+			if (Size + bytes > RealSize)
 			{
 				var expandBy = bytes * Math.Max(bufferResizeMultiplier, 1);
 
-				DataBufferSize = CurrentSizeBytes + expandBy;
+				RealSize = Size + expandBy;
 
 				if (data == default(byte*))
 				{
@@ -55,11 +58,11 @@ namespace UniStack.Data
 				}
 				else
 				{
-					data = (byte*)Marshal.ReAllocHGlobal((IntPtr)data, (IntPtr)DataBufferSize);
+					data = (byte*)Marshal.ReAllocHGlobal((IntPtr)data, (IntPtr)RealSize);
 				}
 			}
 
-			var offset = CurrentSizeBytes;
+			var offset = Size;
 
 			SetInt(id, ref offset);
 			data[offset++] = (byte)tags.Length;
@@ -78,7 +81,8 @@ namespace UniStack.Data
 				data[offset++] = kv.Value;
 			}
 
-			CurrentSizeBytes += bytes;
+			Size += bytes;
+			Count++;
 		}
 
 		public void Remove(uint[] indices)
@@ -94,7 +98,7 @@ namespace UniStack.Data
 				position = 0;
 			}
 
-			if (position >= CurrentSizeBytes)
+			if (position >= Size)
 			{
 				question = default(Question);
 
