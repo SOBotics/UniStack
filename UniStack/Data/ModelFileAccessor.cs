@@ -8,7 +8,7 @@ namespace UniStack.Data
 {
 	public static class ModelFileAccessor
 	{
-		public const string DataDir = "models";
+		public static string DataDir { get; } = "models";
 
 		public static string[] AvailableModels
 		{

@@ -1,26 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.HashFunction;
-using System.Data.HashFunction.xxHash;
-using System.Linq;
 using System.Text;
 using System.Web;
 
-namespace UniStack.Data
+namespace UniStack.NLP
 {
-	public static class ModelBuilder
+	public static class PostTokeniser
 	{
-		public class Model
-		{
-			public int Id;
-			public int[] Tags;
-			public Dictionary<int, byte> Terms;
-		}
-
 		public class PostToken
 		{
-			public string Word;
-			public WordType Type;
+			public string Word { get; set; }
+			public WordType Type { get; set; }
 		}
 
 		public enum WordType
@@ -38,57 +28,27 @@ namespace UniStack.Data
 			CodeBlock
 		}
 
-		private static IxxHash hash = xxHashFactory.Instance.Create(new xxHashConfig
-		{
-			HashSizeInBits = 32
-		});
-
 		private static string[] wordDelimiters = new[]
 		{
 			" ",
-			"&nbsp;",
 			"\n"
 		};
 
 
 
-		public static Model Build(int id, string[] tags, string body)
+		public static List<PostToken> Tokenise(string body)
 		{
-			var tagHashes = new int[tags.Length];
+			body = body?.Replace("&nbsp;", " ", StringComparison.Ordinal);
+			body = body?.Trim();
 
-			for (var i = 0; i < tags.Length; i++)
+			if (string.IsNullOrEmpty(body))
 			{
-				var hashBytes = hash.ComputeHash(tags[i]).Hash;
-
-				tagHashes[i] = BitConverter.ToInt32(hashBytes, 0);
+				return null;
 			}
 
-			var b = GetBodyTerms(body);
-
-			return new Model
-			{
-				Id = id,
-				Tags = tagHashes,
-				Terms = null
-			};
-		}
-
-
-
-		private static Dictionary<int, byte> GetBodyTerms(string body)
-		{
-			var tokens = TokenisePost(body);
-
-			// clean up tokens, stem/remove punctuation/americanise
-
-			return null;
-		}
-
-		public static List<PostToken> TokenisePost(string body)
-		{
 			var tokens = new List<PostToken>();
 			var tagSplit = SplitTags(body);
-			var layers = new List<WordType>();
+			var layers = new List<WordType> { WordType.Text };
 
 			for (var i = 0; i < tagSplit.Count; i++)
 			{
@@ -96,13 +56,16 @@ namespace UniStack.Data
 				{
 					if (tagSplit[i].Length > 1 && tagSplit[i][1] == '/')
 					{
-						layers.RemoveAt(layers.Count - 1);
+						if (layers.Count > 1)
+						{
+							layers.RemoveAt(layers.Count - 1);
+						}
 
 						continue;
 					}
 
 					var type = GetTagType(tagSplit[i]);
-					
+
 					if (type != WordType.None)
 					{
 						layers.Add(type);
@@ -112,8 +75,7 @@ namespace UniStack.Data
 				}
 
 				var wordSplit = tagSplit[i]
-					.Split(wordDelimiters, StringSplitOptions.RemoveEmptyEntries)
-					.ToList();
+					.Split(wordDelimiters, StringSplitOptions.RemoveEmptyEntries);
 				var currentLayer = layers[layers.Count - 1];
 
 				if (currentLayer == WordType.Code)
@@ -133,6 +95,10 @@ namespace UniStack.Data
 				{
 					currentLayer = WordType.Blockquote;
 				}
+				else if (currentLayer == WordType.Unknown)
+				{
+					currentLayer = WordType.Text;
+				}
 
 				foreach (var word in wordSplit)
 				{
@@ -146,6 +112,8 @@ namespace UniStack.Data
 
 			return tokens;
 		}
+
+
 
 		private static WordType GetTagType(string tag)
 		{

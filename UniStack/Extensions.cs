@@ -14,5 +14,11 @@ namespace UniStack
 
 		public static string GetCleanText(this Message msg) =>
 			pingRemover.Replace(msg?.Text ?? "", "").Trim();
+
+		public static int ToInt(this byte[] bytes) =>
+			bytes[0] << 24 ^
+			bytes[1] << 16 ^
+			bytes[2] << 8 ^
+			bytes[3];
 	}
 }

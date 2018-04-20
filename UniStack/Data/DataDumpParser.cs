@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Web;
+using UniStack.NLP;
 
 namespace UniStack.Data
 {
@@ -50,9 +51,7 @@ namespace UniStack.Data
 			var qPool = new QuestionPool(1000);
 
 			using (var inFs = File.Open(dumpPath, FileMode.Open))
-			using (var outFs = File.Open(outputFile, FileMode.Create))
 			using (var reader = new StreamReader(inFs))
-			using (var writer = new StreamWriter(outFs))
 			{
 				string line;
 
@@ -63,8 +62,6 @@ namespace UniStack.Data
 					if (p != null)
 					{
 						var m = ModelBuilder.Build(p.Id, p.Tags, p.Body);
-						
-						//TODO: write model to file
 
 						//qPool.Add(m.Id, m.Tags, m.Terms);
 
