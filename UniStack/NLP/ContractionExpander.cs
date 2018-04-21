@@ -4,7 +4,7 @@ using System.Text;
 
 namespace UniStack.NLP
 {
-	public static class TokenCleaner
+	public static class ContractionExpander
 	{
 		private static Dictionary<string, string[]> commonIncorrectContractions = new Dictionary<string, string[]>
 		{
@@ -30,7 +30,7 @@ namespace UniStack.NLP
 
 
 
-		public static List<string> ExpandContraction(PostTokeniser.PostToken token)
+		public static List<string> Expand(PostTokeniser.PostToken token)
 		{
 			if (token.Type != PostTokeniser.WordType.Text)
 			{
