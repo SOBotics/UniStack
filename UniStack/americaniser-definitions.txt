@@ -115,10 +115,15 @@ recognising recognizing
 recognises recognizes
 rumoured rumored
 rumouring rumoring
+sanitise sanitize
 savour savor
 savours savors
 savoured savored
 savouring savoring
+serialise serialize
+serialiser serializer
+serialised serialized
+serialising serializing
 splendour splendor
 splendours splendors
 theatre theater

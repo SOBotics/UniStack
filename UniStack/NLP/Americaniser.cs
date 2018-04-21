@@ -8,7 +8,7 @@ namespace UniStack.NLP
 	// Based on https://github.com/stanfordnlp/CoreNLP/blob/master/src/edu/stanford/nlp/process/Americanize.java
 	public static class Americaniser
 	{
-		private const string defsFile = "americaniser-definitions";
+		private const string defsFile = "americaniser-definitions.txt";
 		private static Dictionary<string, string> words;
 
 		static Americaniser()
@@ -19,16 +19,20 @@ namespace UniStack.NLP
 				.ToDictionary(x => x[0], x => x[1]);
 		}
 
-		public static string Americanise(string word)
+		public static bool Americanise(string word, out string americanised)
 		{
 			var wordLower = word.ToLowerInvariant();
 
 			if (words.ContainsKey(wordLower))
 			{
-				return words[wordLower];
+				americanised = words[wordLower];
+
+				return true;
 			}
 
-			return word;
+			americanised = word;
+
+			return false;
 		}
 
 	}

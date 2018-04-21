@@ -136,11 +136,20 @@ namespace UniStack.NLP
 					}
 				}
 
-				var word = builder.ToString();
+				var w = builder.ToString();
 
-				if (word.Length == 0) continue;
+				if (w.Length == 0) continue;
 
-				words.Add(word);
+				if (Americaniser.Americanise(w, out var americanised))
+				{
+					words.Add(americanised);
+				}
+				else
+				{
+					var ws = ContractionExpander.Expand(w);
+
+					words.AddRange(ws);
+				}
 			}
 
 			return words;

@@ -30,14 +30,9 @@ namespace UniStack.NLP
 
 
 
-		public static List<string> Expand(PostTokeniser.PostToken token)
+		public static List<string> Expand(string word)
 		{
-			if (token.Type != PostTokeniser.WordType.Text)
-			{
-				return new List<string> { token.Word };
-			}
-
-			var split = token.Word.Split('\'');
+			var split = word.Split('\'');
 			var words = new List<string>();
 
 			if (split.Length == 2)
@@ -73,10 +68,25 @@ namespace UniStack.NLP
 						}
 						else
 						{
-							words.Add(split[0]);
+							words.Add(split[0].Substring(0, split[0].Length - 1));
 							words.Add("not");
 						}
 
+						break;
+					}
+					case "s":
+					{
+						// Not totally accurate since 's can be possessive.
+						words.Add(split[0]);
+						words.Add("is");
+						break;
+					}
+					case "d":
+					{
+						// Not totally accurate since 'd can expand to
+						// different words depending on context.
+						words.Add(split[0]);
+						words.Add("would");
 						break;
 					}
 					case "m":
@@ -105,7 +115,7 @@ namespace UniStack.NLP
 					}
 					default:
 					{
-						words.Add(token.Word);
+						words.Add(word);
 						break;
 					}
 				}
@@ -114,7 +124,7 @@ namespace UniStack.NLP
 			}
 			else
 			{
-				var wordLower = token.Word.ToLowerInvariant();
+				var wordLower = word.ToLowerInvariant();
 
 				if (commonIncorrectContractions.ContainsKey(wordLower))
 				{
@@ -122,19 +132,19 @@ namespace UniStack.NLP
 				}
 				else if (wordLower == "im")
 				{
-					if (token.Word[1] == 'm')
+					if (word[1] == 'm')
 					{
 						words.Add("I");
 						words.Add("am");
 					}
 					else
 					{
-						words.Add(token.Word);
+						words.Add(word);
 					}
 				}
 				else
 				{
-					words.Add(token.Word);
+					words.Add(word);
 				}
 
 				return words;
